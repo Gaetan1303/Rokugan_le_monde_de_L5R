@@ -21,7 +21,7 @@ router.get('/clans', async (req, res) => {
         const data = await loadJsonFile('clans.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load clans data' });
+        res.status(500).json({ error: 'Failed to load clans data' });
     }
 });
 
@@ -30,11 +30,11 @@ router.get('/clans/:id', async (req, res) => {
         const data = await loadJsonFile('clans.json');
         const clan = data.clans.find(c => c.id === req.params.id);
         if (!clan) {
-            return res.status().json({ error: 'Clan not found' });
+            return res.status(500).json({ error: 'Clan not found' });
         }
         res.json(clan);
     } catch (error) {
-        res.status().json({ error: 'Failed to load clan data' });
+        res.status(500).json({ error: 'Failed to load clan data' });
     }
 });
 
@@ -43,7 +43,7 @@ router.get('/schools', async (req, res) => {
         const data = await loadJsonFile('ecoles.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load schools data' });
+        res.status(500).json({ error: 'Failed to load schools data' });
     }
 });
 
@@ -52,11 +52,11 @@ router.get('/schools/:id', async (req, res) => {
         const data = await loadJsonFile('ecoles.json');
         const school = data.ecoles.find(s => s.id === req.params.id);
         if (!school) {
-            return res.status().json({ error: 'School not found' });
+            return res.status(500).json({ error: 'School not found' });
         }
         res.json(school);
     } catch (error) {
-        res.status().json({ error: 'Failed to load school data' });
+        res.status(500).json({ error: 'Failed to load school data' });
     }
 });
 
@@ -66,7 +66,7 @@ router.get('/schools/clan/:clanId', async (req, res) => {
         const schools = data.ecoles.filter(s => s.clan_id === req.params.clanId || s.clan === req.params.clanId);
         res.json({ ecoles: schools });
     } catch (error) {
-        res.status().json({ error: 'Failed to load schools data' });
+        res.status(500).json({ error: 'Failed to load schools data' });
     }
 });
 
@@ -89,7 +89,7 @@ router.get('/ecoles', async (req, res) => {
         
         res.json({ ecoles: schools, meta: data.meta, count: schools.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load schools data' });
+        res.status(500).json({ error: 'Failed to load schools data' });
     }
 });
 
@@ -98,7 +98,7 @@ router.get('/skills', async (req, res) => {
         const data = await loadJsonFile('competences.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load skills data' });
+        res.status(500).json({ error: 'Failed to load skills data' });
     }
 });
 
@@ -107,11 +107,11 @@ router.get('/skills/:id', async (req, res) => {
         const data = await loadJsonFile('competences.json');
         const skill = data.competences.find(s => s.id === req.params.id);
         if (!skill) {
-            return res.status().json({ error: 'Skill not found' });
+            return res.status(500).json({ error: 'Skill not found' });
         }
         res.json(skill);
     } catch (error) {
-        res.status().json({ error: 'Failed to load skill data' });
+        res.status(500).json({ error: 'Failed to load skill data' });
     }
 });
 
@@ -121,7 +121,7 @@ router.get('/skills/type/:type', async (req, res) => {
         const skills = data.competences.filter(s => s.type === req.params.type);
         res.json({ competences: skills });
     } catch (error) {
-        res.status().json({ error: 'Failed to load skills data' });
+        res.status(500).json({ error: 'Failed to load skills data' });
     }
 });
 
@@ -131,7 +131,7 @@ router.get('/competences', async (req, res) => {
         const data = await loadJsonFile('competences.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des compétences' });
+        res.status(500).json({ error: 'Échec du chargement des compétences' });
     }
 });
 
@@ -140,11 +140,11 @@ router.get('/competences/:id', async (req, res) => {
         const data = await loadJsonFile('competences.json');
         const skill = data.competences.find(s => s.id === req.params.id);
         if (!skill) {
-            return res.status().json({ error: 'Compétence introuvable' });
+            return res.status(500).json({ error: 'Compétence introuvable' });
         }
         res.json(skill);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement de la compétence' });
+        res.status(500).json({ error: 'Échec du chargement de la compétence' });
     }
 });
 
@@ -154,7 +154,7 @@ router.get('/competences/type/:type', async (req, res) => {
         const skills = data.competences.filter(s => s.type === req.params.type);
         res.json({ competences: skills });
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des compétences' });
+        res.status(500).json({ error: 'Échec du chargement des compétences' });
     }
 });
 
@@ -163,7 +163,7 @@ router.get('/traits', async (req, res) => {
         const data = await loadJsonFile('traits.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load traits data' });
+        res.status(500).json({ error: 'Failed to load traits data' });
     }
 });
 
@@ -172,7 +172,7 @@ router.get('/advantages', async (req, res) => {
         const data = await loadJsonFile('avantages.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load advantages data' });
+        res.status(500).json({ error: 'Failed to load advantages data' });
     }
 });
 
@@ -181,11 +181,11 @@ router.get('/advantages/:id', async (req, res) => {
         const data = await loadJsonFile('avantages.json');
         const advantage = data.advantages.find(a => a.id === req.params.id);
         if (!advantage) {
-            return res.status().json({ error: 'Advantage not found' });
+            return res.status(500).json({ error: 'Advantage not found' });
         }
         res.json(advantage);
     } catch (error) {
-        res.status().json({ error: 'Failed to load advantage data' });
+        res.status(500).json({ error: 'Failed to load advantage data' });
     }
 });
 
@@ -195,7 +195,7 @@ router.get('/avantages', async (req, res) => {
         const data = await loadJsonFile('avantages.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des avantages' });
+        res.status(500).json({ error: 'Échec du chargement des avantages' });
     }
 });
 
@@ -204,11 +204,11 @@ router.get('/avantages/:id', async (req, res) => {
         const data = await loadJsonFile('avantages.json');
         const advantage = data.advantages.find(a => a.id === req.params.id);
         if (!advantage) {
-            return res.status().json({ error: 'Avantage introuvable' });
+            return res.status(500).json({ error: 'Avantage introuvable' });
         }
         res.json(advantage);
     } catch (error) {
-        res.status().json({ error: "Échec du chargement de l'avantage" });
+        res.status(500).json({ error: "Échec du chargement de l'avantage" });
     }
 });
 
@@ -217,7 +217,7 @@ router.get('/disadvantages', async (req, res) => {
         const data = await loadJsonFile('desavantages.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load disadvantages data' });
+        res.status(500).json({ error: 'Failed to load disadvantages data' });
     }
 });
 
@@ -226,11 +226,11 @@ router.get('/disadvantages/:id', async (req, res) => {
         const data = await loadJsonFile('desavantages.json');
         const disadvantage = data.disadvantages.find(d => d.id === req.params.id);
         if (!disadvantage) {
-            return res.status().json({ error: 'Disadvantage not found' });
+            return res.status(500).json({ error: 'Disadvantage not found' });
         }
         res.json(disadvantage);
     } catch (error) {
-        res.status().json({ error: 'Failed to load disadvantage data' });
+        res.status(500).json({ error: 'Failed to load disadvantage data' });
     }
 });
 
@@ -239,7 +239,7 @@ router.get('/desavantages', async (req, res) => {
         const data = await loadJsonFile('desavantages.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des désavantages' });
+        res.status(500).json({ error: 'Échec du chargement des désavantages' });
     }
 });
 
@@ -248,11 +248,11 @@ router.get('/desavantages/:id', async (req, res) => {
         const data = await loadJsonFile('desavantages.json');
         const disadvantage = data.disadvantages.find(d => d.id === req.params.id);
         if (!disadvantage) {
-            return res.status().json({ error: 'Désavantage introuvable' });
+            return res.status(500).json({ error: 'Désavantage introuvable' });
         }
         res.json(disadvantage);
     } catch (error) {
-        res.status().json({ error: "Échec du chargement du désavantage" });
+        res.status(500).json({ error: "Échec du chargement du désavantage" });
     }
 });
 
@@ -266,7 +266,7 @@ router.get('/equipment', async (req, res) => {
         const data = await loadJsonFile('equipement.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load equipment data' });
+        res.status(500).json({ error: 'Failed to load equipment data' });
     }
 });
 
@@ -275,7 +275,7 @@ router.get('/equipment/weapons', async (req, res) => {
         const data = await loadJsonFile('equipement.json');
         res.json({ weapons: data.weapons || [] });
     } catch (error) {
-        res.status().json({ error: 'Failed to load weapons data' });
+        res.status(500).json({ error: 'Failed to load weapons data' });
     }
 });
 
@@ -284,7 +284,7 @@ router.get('/equipment/armor', async (req, res) => {
         const data = await loadJsonFile('equipement.json');
         res.json({ armor: data.armor || [] });
     } catch (error) {
-        res.status().json({ error: 'Failed to load armor data' });
+        res.status(500).json({ error: 'Failed to load armor data' });
     }
 });
 
@@ -293,7 +293,7 @@ router.get('/equipment/items', async (req, res) => {
         const data = await loadJsonFile('equipement.json');
         res.json({ items: data.items || [] });
     } catch (error) {
-        res.status().json({ error: 'Failed to load items data' });
+        res.status(500).json({ error: 'Failed to load items data' });
     }
 });
 
@@ -303,7 +303,7 @@ router.get('/equipement', async (req, res) => {
         const data = await loadJsonFile('equipement.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: "Échec du chargement de l'équipement" });
+        res.status(500).json({ error: "Échec du chargement de l'équipement" });
     }
 });
 
@@ -319,7 +319,7 @@ router.get('/spells', async (req, res) => {
             spells = spells.filter(s => (s.element || '').toLowerCase() === element);
         }
         if (req.query.mastery || req.query.maitrise) {
-            const mastery = parseInt(req.query.mastery || req.query.maitrise, );
+            const mastery = parseInt(req.query.mastery || req.query.maitrise, 10);
             spells = spells.filter(s => Number(s.mastery || s.maitrise) === mastery);
         }
         if (req.query.canon_status) {
@@ -328,7 +328,7 @@ router.get('/spells', async (req, res) => {
         
         res.json({ spells, count: spells.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load spells data' });
+        res.status(500).json({ error: 'Failed to load spells data' });
     }
 });
 
@@ -339,18 +339,18 @@ router.get('/spells/element/:element', async (req, res) => {
         const spells = (data.spells || []).filter(s => (s.element || '').toLowerCase() === element);
         res.json({ spells });
     } catch (error) {
-        res.status().json({ error: 'Failed to load spells data' });
+        res.status(500).json({ error: 'Failed to load spells data' });
     }
 });
 
 router.get('/spells/mastery/:rank', async (req, res) => {
     try {
         const data = await loadJsonFile('sorts.json');
-        const rank = parseInt(req.params.rank, );
+        const rank = parseInt(req.params.rank, 10);
         const spells = (data.spells || []).filter(s => Number(s.mastery) === rank);
         res.json({ spells });
     } catch (error) {
-        res.status().json({ error: 'Failed to load spells data' });
+        res.status(500).json({ error: 'Failed to load spells data' });
     }
 });
 
@@ -360,7 +360,7 @@ router.get('/sorts', async (req, res) => {
         const data = await loadJsonFile('sorts.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des sorts' });
+        res.status(500).json({ error: 'Échec du chargement des sorts' });
     }
 });
 
@@ -371,18 +371,18 @@ router.get('/sorts/element/:element', async (req, res) => {
         const spells = (data.spells || []).filter(s => (s.element || '').toLowerCase() === element);
         res.json({ sorts: spells });
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des sorts' });
+        res.status(500).json({ error: 'Échec du chargement des sorts' });
     }
 });
 
 router.get('/sorts/rang/:rank', async (req, res) => {
     try {
         const data = await loadJsonFile('sorts.json');
-        const rank = parseInt(req.params.rank, );
+        const rank = parseInt(req.params.rank, 10);
         const spells = (data.spells || []).filter(s => Number(s.mastery) === rank);
         res.json({ sorts: spells });
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des sorts' });
+        res.status(500).json({ error: 'Échec du chargement des sorts' });
     }
 });
 
@@ -407,7 +407,7 @@ router.get('/kiho', async (req, res) => {
         
         res.json({ kiho, count: kiho.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load kiho data' });
+        res.status(500).json({ error: 'Failed to load kiho data' });
     }
 });
 
@@ -418,7 +418,7 @@ router.get('/kiho/element/:element', async (req, res) => {
         const kiho = (data.kiho || []).filter(k => (k.element || '').toLowerCase() === element);
         res.json({ kiho });
     } catch (error) {
-        res.status().json({ error: 'Failed to load kiho data' });
+        res.status(500).json({ error: 'Failed to load kiho data' });
     }
 });
 
@@ -430,7 +430,7 @@ router.get('/maho', async (req, res) => {
         
         // Filters
         if (req.query.maitrise || req.query.mastery) {
-            const mastery = parseInt(req.query.maitrise || req.query.mastery, );
+            const mastery = parseInt(req.query.maitrise || req.query.mastery, 10);
             maho = maho.filter(m => Number(m.maitrise || m.mastery) === mastery);
         }
         if (req.query.canon_status) {
@@ -439,7 +439,7 @@ router.get('/maho', async (req, res) => {
         
         res.json({ maho, count: maho.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load maho data' });
+        res.status(500).json({ error: 'Failed to load maho data' });
     }
 });
 
@@ -464,7 +464,7 @@ router.get('/techniques', async (req, res) => {
         
         res.json({ techniques, count: techniques.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load techniques data' });
+        res.status(500).json({ error: 'Failed to load techniques data' });
     }
 });
 
@@ -475,7 +475,7 @@ router.get('/techniques/clan/:clan', async (req, res) => {
         const list = (data.clan_techniques || []).filter(t => (t.clan || '').toLowerCase() === clan);
         res.json({ techniques: list });
     } catch (error) {
-        res.status().json({ error: 'Failed to load techniques data' });
+        res.status(500).json({ error: 'Failed to load techniques data' });
     }
 });
 
@@ -495,7 +495,7 @@ router.get('/kata', async (req, res) => {
         
         res.json({ kata, count: kata.length });
     } catch (error) {
-        res.status().json({ error: 'Failed to load kata data' });
+        res.status(500).json({ error: 'Failed to load kata data' });
     }
 });
 
@@ -508,7 +508,7 @@ router.get('/families', async (req, res) => {
         );
         res.json({ families: allFamilies });
     } catch (error) {
-        res.status().json({ error: 'Failed to load families data' });
+        res.status(500).json({ error: 'Failed to load families data' });
     }
 });
 
@@ -518,11 +518,11 @@ router.get('/families/clan/:clan', async (req, res) => {
         const clanName = (req.params.clan || '').toLowerCase();
         const clan = data.clans.find(c => (c.id || '').toLowerCase() === clanName);
         if (!clan) {
-            return res.status().json({ error: 'Clan not found' });
+            return res.status(500).json({ error: 'Clan not found' });
         }
         res.json({ families: clan.familles || [] });
     } catch (error) {
-        res.status().json({ error: 'Failed to load families data' });
+        res.status(500).json({ error: 'Failed to load families data' });
     }
 });
 
@@ -532,7 +532,7 @@ router.get('/wounds', async (req, res) => {
         const data = await loadJsonFile('blessures.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load wounds data' });
+        res.status(500).json({ error: 'Failed to load wounds data' });
     }
 });
 
@@ -542,7 +542,7 @@ router.get('/blessures', async (req, res) => {
         const data = await loadJsonFile('blessures.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des blessures' });
+        res.status(500).json({ error: 'Échec du chargement des blessures' });
     }
 });
 
@@ -552,7 +552,7 @@ router.get('/honor', async (req, res) => {
         const data = await loadJsonFile('honneur.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load honor data' });
+        res.status(500).json({ error: 'Failed to load honor data' });
     }
 });
 
@@ -562,7 +562,7 @@ router.get('/honneur', async (req, res) => {
         const data = await loadJsonFile('honneur.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement de l\'honneur' });
+        res.status(500).json({ error: 'Échec du chargement de l\'honneur' });
     }
 });
 
@@ -572,7 +572,7 @@ router.get('/combat-maneuvers', async (req, res) => {
         const data = await loadJsonFile('manoeuvres.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load combat maneuvers data' });
+        res.status(500).json({ error: 'Failed to load combat maneuvers data' });
     }
 });
 
@@ -582,7 +582,7 @@ router.get('/manoeuvres', async (req, res) => {
         const data = await loadJsonFile('manoeuvres.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des manoeuvres' });
+        res.status(500).json({ error: 'Échec du chargement des manoeuvres' });
     }
 });
 
@@ -592,7 +592,7 @@ router.get('/paths', async (req, res) => {
         const data = await loadJsonFile('voies.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load paths data' });
+        res.status(500).json({ error: 'Failed to load paths data' });
     }
 });
 
@@ -603,7 +603,7 @@ router.get('/paths/clan/:clan', async (req, res) => {
         const paths = (data.paths || []).filter(p => (p.clan || '').toLowerCase() === clan || (p.clan || '').toLowerCase() === 'universel');
         res.json({ paths });
     } catch (error) {
-        res.status().json({ error: 'Failed to load paths data' });
+        res.status(500).json({ error: 'Failed to load paths data' });
     }
 });
 
@@ -613,7 +613,7 @@ router.get('/voies', async (req, res) => {
         const data = await loadJsonFile('voies.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des voies' });
+        res.status(500).json({ error: 'Échec du chargement des voies' });
     }
 });
 
@@ -624,7 +624,7 @@ router.get('/voies/clan/:clan', async (req, res) => {
         const paths = (data.paths || []).filter(p => (p.clan || '').toLowerCase() === clan || (p.clan || '').toLowerCase() === 'universel');
         res.json({ voies: paths });
     } catch (error) {
-        res.status().json({ error: 'Échec du chargement des voies' });
+        res.status(500).json({ error: 'Échec du chargement des voies' });
     }
 });
 
@@ -634,7 +634,7 @@ router.get('/creation', async (req, res) => {
         const data = await loadJsonFile('creation.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load creation data' });
+        res.status(500).json({ error: 'Failed to load creation data' });
     }
 });
 
@@ -644,7 +644,7 @@ router.get('/anneaux', async (req, res) => {
         const data = await loadJsonFile('anneaux.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load rings data' });
+        res.status(500).json({ error: 'Failed to load rings data' });
     }
 });
 
@@ -654,7 +654,7 @@ router.get('/regles', async (req, res) => {
         const data = await loadJsonFile('regles.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load rules data' });
+        res.status(500).json({ error: 'Failed to load rules data' });
     }
 });
 
@@ -664,7 +664,7 @@ router.get('/creation-details', async (req, res) => {
         const data = await loadJsonFile('creation_details.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load creation details' });
+        res.status(500).json({ error: 'Failed to load creation details' });
     }
 });
 
@@ -674,7 +674,7 @@ router.get('/combat', async (req, res) => {
         const data = await loadJsonFile('combat.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load combat data' });
+        res.status(500).json({ error: 'Failed to load combat data' });
     }
 });
 
@@ -683,7 +683,7 @@ router.get('/magie', async (req, res) => {
         const data = await loadJsonFile('magie.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load magic data' });
+        res.status(500).json({ error: 'Failed to load magic data' });
     }
 });
 
@@ -693,7 +693,7 @@ router.get('/environnement', async (req, res) => {
         const data = await loadJsonFile('environnement.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load environment data' });
+        res.status(500).json({ error: 'Failed to load environment data' });
     }
 });
 
@@ -702,7 +702,7 @@ router.get('/peur', async (req, res) => {
         const data = await loadJsonFile('peur.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load fear data' });
+        res.status(500).json({ error: 'Failed to load fear data' });
     }
 });
 
@@ -711,7 +711,7 @@ router.get('/souillure', async (req, res) => {
         const data = await loadJsonFile('souillure.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load taint data' });
+        res.status(500).json({ error: 'Failed to load taint data' });
     }
 });
 
@@ -721,7 +721,7 @@ router.get('/social', async (req, res) => {
         const data = await loadJsonFile('social.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load social data' });
+        res.status(500).json({ error: 'Failed to load social data' });
     }
 });
 
@@ -730,7 +730,7 @@ router.get('/economie', async (req, res) => {
         const data = await loadJsonFile('economie.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load economy data' });
+        res.status(500).json({ error: 'Failed to load economy data' });
     }
 });
 
@@ -739,7 +739,7 @@ router.get('/voyage', async (req, res) => {
         const data = await loadJsonFile('voyage.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load travel data' });
+        res.status(500).json({ error: 'Failed to load travel data' });
     }
 });
 
@@ -748,7 +748,7 @@ router.get('/formules', async (req, res) => {
         const data = await loadJsonFile('formules.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Failed to load formulas data' });
+        res.status(500).json({ error: 'Failed to load formulas data' });
     }
 });
 
@@ -758,7 +758,7 @@ router.get('/scenario-guide', async (req, res) => {
         const data = await loadJsonFile('scenario_guide.json');
         res.json(data);
     } catch (error) {
-        res.status().json({ error: 'Scenario guide not available yet' });
+        res.status(500).json({ error: 'Scenario guide not available yet' });
     }
 });
 
@@ -770,7 +770,7 @@ router.get('/scenario-guide/structured', async (req, res) => {
         const data = await loadJsonFile('scenario_guide.json');
         const sections = data?.rawSections || [];
 
-        const pickTop = (arr, n = ) => arr.slice(, n);
+        const pickTop = (arr, n = 3) => arr.slice(0, n);
 
         const has = (s, rx) => {
             const title = (s.titre || '').toString();
@@ -806,7 +806,7 @@ router.get('/scenario-guide/structured', async (req, res) => {
         const summarize = (s) => ({
             source: s.source,
             titre: s.titre,
-            excerpt: (s.paragraphs || []).slice(, )
+            excerpt: (s.paragraphs || []).slice(0, 2)
         });
 
         const structured = {
@@ -826,6 +826,6 @@ router.get('/scenario-guide/structured', async (req, res) => {
 
         res.json(structured);
     } catch (error) {
-        res.status().json({ error: 'Structured scenario guide not available yet' });
+        res.status(500).json({ error: 'Structured scenario guide not available yet' });
     }
 });
