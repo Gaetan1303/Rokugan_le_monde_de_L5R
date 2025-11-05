@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gamemaster-backend
+    env: node
+    region: frankfurt
+    plan: free
+    rootDir: gamemaster-backend
+    buildCommand: yarn install
+    startCommand: yarn start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NODE_ENV
+        value: production
