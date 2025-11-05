@@ -9,11 +9,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:smoke": "node scripts/smoke_test.js",
     "test:scenarios": "node scripts/test_scenarios.js",
+    "test:security": "node test-security.js",
     "simulate:session": "node scripts/simulate_session.js",
     "simulate:session:3001": "node scripts/simulate_session.js http://localhost:3001",
     "start:on": "node scripts/start_on_port.js",
     "start:3000": "node scripts/start_on_port.js 3000",
-    "start:3001": "node scripts/start_on_port.js 3001"
+    "start:3001": "node scripts/start_on_port.js 3001",
+    "generate-secrets": "node generate-secrets.js",
+    "security-audit": "yarn audit"
   },
   "keywords": [
     "gamemaster",
@@ -32,9 +35,16 @@
     "body-parser": "^2.2.0",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",

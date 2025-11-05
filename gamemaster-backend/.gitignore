@@ -65,11 +65,24 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+# dotenv environment variables file - SÉCURITÉ CRITIQUE
 .env
 .env.test
 .env.local
 .env.production
+.env.development
+.env.*.local
+
+# Clés et certificats - NE JAMAIS COMMITER
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+*.pfx
+secrets/
+config/secrets.json
+.secrets
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

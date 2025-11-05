@@ -8,6 +8,33 @@ services:
     startCommand: cd gamemaster-backend && yarn start
     envVars:
       - key: NODE_VERSION
-        value: 22.16.0
+        value: ..
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 
+      - key: ALLOWED_ORIGINS
+        value: https://gaetan.github.io
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 
+      - key: WS_MAX_CONNECTIONS_PER_IP
+        value: 
+      - key: WS_HEARTBEAT_INTERVAL
+        value: 
+      - key: WS_TIMEOUT
+        value: 
+      - key: MAX_REQUEST_SIZE
+        value: kb
+      - key: HELMET_ENABLED
+        value: true
+      - key: LOG_LEVEL
+        value: warn
+      - key: HIDE_SENSITIVE_LOGS
+        value: true
+      #  AJOUTER VOS CLÉS SECRÈTES DANS LE DASHBOARD RENDER
+      # Ne pas mettre les vraies valeurs ici (fichier public)
+      # JWT_SECRET: générer avec "yarn generate-secrets"
+      # SESSION_SECRET: générer avec "yarn generate-secrets"  
+      # WEBSOCKET_SECRET: générer avec "yarn generate-secrets"

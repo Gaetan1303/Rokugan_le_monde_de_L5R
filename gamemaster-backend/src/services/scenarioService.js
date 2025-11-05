@@ -29,7 +29,7 @@ class ScenarioService {
   loadJson(filename) {
     try {
       const file = path.join(this.DATA_DIR, filename);
-      const raw = fs.readFileSync(file, 'utf-8');
+      const raw = fs.readFileSync(file, 'utf-');
       return JSON.parse(raw);
     } catch (e) {
       return null;
@@ -37,7 +37,7 @@ class ScenarioService {
   }
 
   pick(arr) {
-    if (!arr || arr.length === 0) return null;
+    if (!arr || arr.length === ) return null;
     return arr[Math.floor(Math.random() * arr.length)];
   }
 

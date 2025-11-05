@@ -128,7 +128,7 @@ class RoomService {
     const isGM = senderId === room.gmId;
     const chatMessage = room.addChatMessage(senderId, senderName, message, isGM);
     
-    console.log(`[${room.name}] ${senderName}${isGM ? ' (GM)' : ''}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    console.log(`[${room.name}] ${senderName}${isGM ? ' (GM)' : ''}: ${message.substring(, )}${message.length >  ? '...' : ''}`);
     return chatMessage;
   }
 
@@ -146,31 +146,31 @@ class RoomService {
   // Nettoyer les rooms vides ou anciennes
   cleanupRooms() {
     const now = new Date();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 heures
-    const emptyRoomMaxAge = 2 * 60 * 60 * 1000; // 2 heures pour les rooms vides
+    const maxAge =  *  *  * ; //  heures
+    const emptyRoomMaxAge =  *  *  * ; //  heures pour les rooms vides
     
-    let cleanedCount = 0;
+    let cleanedCount = ;
 
     for (const [roomId, room] of this.rooms.entries()) {
       let shouldDelete = false;
       let reason = '';
 
-      // Supprimer les rooms vides depuis plus de 2 heures
-      if (room.players.length === 0 && (now - room.createdAt) > emptyRoomMaxAge) {
+      // Supprimer les rooms vides depuis plus de  heures
+      if (room.players.length ===  && (now - room.createdAt) > emptyRoomMaxAge) {
         shouldDelete = true;
-        reason = 'room vide depuis plus de 2 heures';
+        reason = 'room vide depuis plus de  heures';
       }
       
       // Supprimer les rooms très anciennes sans activité récente
       else if ((now - room.lastActivity) > maxAge && room.status === 'waiting') {
         shouldDelete = true;
-        reason = 'inactivité depuis plus de 24 heures';
+        reason = 'inactivité depuis plus de  heures';
       }
       
-      // Supprimer les rooms terminées depuis plus de 24 heures
+      // Supprimer les rooms terminées depuis plus de  heures
       else if (room.status === 'completed' && (now - room.lastActivity) > maxAge) {
         shouldDelete = true;
-        reason = 'partie terminée depuis plus de 24 heures';
+        reason = 'partie terminée depuis plus de  heures';
       }
 
       if (shouldDelete) {
@@ -180,7 +180,7 @@ class RoomService {
       }
     }
 
-    if (cleanedCount > 0) {
+    if (cleanedCount > ) {
       console.log(`Nettoyage terminé: ${cleanedCount} room(s) supprimée(s)`);
     }
 
@@ -199,8 +199,8 @@ class RoomService {
       waitingRooms: rooms.filter(r => r.status === 'waiting').length,
       pausedRooms: rooms.filter(r => r.status === 'paused').length,
       completedRooms: rooms.filter(r => r.status === 'completed').length,
-      totalPlayers: rooms.reduce((sum, room) => sum + room.players.length, 0),
-      connectedPlayers: rooms.reduce((sum, room) => sum + room.getConnectedPlayers().length, 0)
+      totalPlayers: rooms.reduce((sum, room) => sum + room.players.length, ),
+      connectedPlayers: rooms.reduce((sum, room) => sum + room.getConnectedPlayers().length, )
     };
   }
 }
@@ -212,12 +212,12 @@ const roomService = new RoomService();
 setInterval(() => {
   console.log('Démarrage du nettoyage automatique des rooms...');
   roomService.cleanupRooms();
-}, 60 * 60 * 1000);
+},  *  * );
 
-// Nettoyage au démarrage après 5 minutes
+// Nettoyage au démarrage après  minutes
 setTimeout(() => {
   console.log('Premier nettoyage automatique...');
   roomService.cleanupRooms();
-}, 5 * 60 * 1000);
+},  *  * );
 
 module.exports = roomService;

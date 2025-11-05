@@ -1,9 +1,9 @@
-# GM_L5R — Point projet (dev & fonctionnalités)
+# GM_LR — Point projet (dev & fonctionnalités)
 
-Mise à jour au 2025-11-04.
+Mise à jour au --.
 
 ## Vue d’ensemble
-Backend Node/Express avec Socket.IO pour gérer des sessions de jeu L5R: création/gestion de rooms, chat/dés, gestion des personnages, et intégration «Scénario» (génération/attachement, changement de scène, historique). Données de référence L5R livrées en JSON.
+Backend Node/Express avec Socket.IO pour gérer des sessions de jeu LR: création/gestion de rooms, chat/dés, gestion des personnages, et intégration «Scénario» (génération/attachement, changement de scène, historique). Données de référence LR livrées en JSON.
 
 ## Fonctionnalités principales
 - Rooms (sessions de jeu)
@@ -11,7 +11,7 @@ Backend Node/Express avec Socket.IO pour gérer des sessions de jeu L5R: créati
   - Public/privé (avec mot de passe)
   - Statuts: waiting, active, paused, completed
   - Joueurs: rejoindre/quitter, connexion en temps réel, historique de chat
-  - Game data: currentScene, initiative, conditions, scenesHistory (limité à 50)
+  - Game data: currentScene, initiative, conditions, scenesHistory (limité à )
 
 - WebSocket (compat JDR-test + extensions)
   - create-room (ack) — étendu pour scenarios (id/objet/génération)
@@ -57,12 +57,12 @@ Backend Node/Express avec Socket.IO pour gérer des sessions de jeu L5R: créati
 
 ## Scripts utiles (locaux)
 - Démarrage serveur (ports):
-  - `npm --prefix .\gamemaster-backend run start:3000`
-  - `npm --prefix .\gamemaster-backend run start:3001`
-- Test WS scénario end-to-end (GM + 2 joueurs, 2 changements de scène):
-  - `node .\gamemaster-backend\scripts\run_with_port.js .\test_session_with_scenario.js 3001`
-- Simulation de session (GM + 3 joueurs) — si besoin:
-  - `npm --prefix .\gamemaster-backend run simulate:session:3001`
+  - `npm --prefix .\gamemaster-backend run start:`
+  - `npm --prefix .\gamemaster-backend run start:`
+- Test WS scénario end-to-end (GM +  joueurs,  changements de scène):
+  - `node .\gamemaster-backend\scripts\run_with_port.js .\test_session_with_scenario.js `
+- Simulation de session (GM +  joueurs) — si besoin:
+  - `npm --prefix .\gamemaster-backend run simulate:session:`
 
 ## Comment créer une session avec «Scénario»
 - WebSocket (événement create-room, ack):
@@ -74,15 +74,15 @@ Backend Node/Express avec Socket.IO pour gérer des sessions de jeu L5R: créati
   - POST /api/rooms/with-scenario
     - `{"name":"Session Scenario","gmName":"Sensei","generate":true}`
   - PUT /api/rooms/:roomId/scenario/scene
-    - par index: `{"sceneIndex":1}`
+    - par index: `{"sceneIndex":}`
     - par titre: `{"title":"Enquête et tensions"}`
 
 ## État des tests
 - Test WS `test_session_with_scenario.js` : PASS
-  - Crée la room (scénario généré), GM + 2 joueurs rejoignent
+  - Crée la room (scénario généré), GM +  joueurs rejoignent
   - `set-current-scene` par index puis par titre
   - Diffusion `scene-changed` reçue par tous (GM + joueurs)
-  - `scenesHistory.length >= 2` vérifié via `find-room`
+  - `scenesHistory.length >= ` vérifié via `find-room`
 
 ## Lancement (Windows PowerShell)
 - Installer dépendances (si besoin):
@@ -91,17 +91,17 @@ Backend Node/Express avec Socket.IO pour gérer des sessions de jeu L5R: créati
   ```
 - Démarrer:
   ```powershell
-  npm --prefix .\gamemaster-backend run start:3001
-  # API: http://localhost:3001/api, Health: /api/health
+  npm --prefix .\gamemaster-backend run start:
+  # API: http://localhost:/api, Health: /api/health
   ```
 - Tester WS scénario:
   ```powershell
-  node .\gamemaster-backend\scripts\run_with_port.js .\test_session_with_scenario.js 3001
+  node .\gamemaster-backend\scripts\run_with_port.js .\test_session_with_scenario.js 
   ```
 
 ## Notes d’implémentation
 - Stockage en mémoire (rooms/scénarios). Nettoyage périodique des rooms.
-- CORS ouverts pour local (3000/3001) et GitHub Pages (JDR-test).
+- CORS ouverts pour local (/) et GitHub Pages (JDR-test).
 - `.gitignore` global ignore `node_modules/` et `scripts/` à tous niveaux.
 
 ## Prochaines étapes (suggestions)

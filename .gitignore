@@ -11,3 +11,6 @@ scripts/
 # Environment files (optional)
 .env
 *.local
+package-lock.json
+yarn.lock
+package.json

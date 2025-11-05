@@ -1,4 +1,4 @@
-// Modèle pour une Room de jeu GameMaster L5R
+// Modèle pour une Room de jeu GameMaster LR
 class Room {
   constructor(name, gmId, gmName, scenario = null) {
     this.id = this.generateId();
@@ -10,7 +10,7 @@ class Room {
     this.status = 'waiting'; // waiting, active, paused, completed
     this.createdAt = new Date();
     this.lastActivity = new Date();
-    this.maxPlayers = 6; // Limite typique pour L5R
+    this.maxPlayers = ; // Limite typique pour LR
     this.isPrivate = false;
     this.password = null;
     this.currentSession = null;
@@ -25,7 +25,7 @@ class Room {
   }
 
   generateId() {
-    return Math.random().toString(36).substr(2, 9).toUpperCase();
+    return Math.random().toString().substr(, ).toUpperCase();
   }
 
   addPlayer(playerId, playerName, character = null) {
@@ -44,7 +44,7 @@ class Room {
         name: playerName,
         clan: null,
         school: null,
-        rank: 1
+        rank: 
       },
       isConnected: true,
       joinedAt: new Date(),
@@ -68,8 +68,8 @@ class Room {
 
   removePlayer(playerId) {
     const index = this.players.findIndex(p => p.id === playerId);
-    if (index > -1) {
-      const removedPlayer = this.players.splice(index, 1)[0];
+    if (index > -) {
+      const removedPlayer = this.players.splice(index, )[];
       this.updateActivity();
       return removedPlayer;
     }
@@ -107,9 +107,9 @@ class Room {
     this.chat.push(chatMessage);
     this.updateActivity();
     
-    // Garder seulement les 100 derniers messages
-    if (this.chat.length > 100) {
-      this.chat = this.chat.slice(-100);
+    // Garder seulement les  derniers messages
+    if (this.chat.length > ) {
+      this.chat = this.chat.slice(-);
     }
     
     return chatMessage;
