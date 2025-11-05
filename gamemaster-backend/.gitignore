@@ -134,11 +134,14 @@ ehthumbs.db
 Thumbs.db
 
 
-# Custom ignores
+# Custom ignores - NE JAMAIS COMMITER
 generate-secrets.js
+test-security.js
 .env
+.env.*
 *.local
 package-lock.json
 yarn.lock
+package.json
 package.json
 test-security.js
