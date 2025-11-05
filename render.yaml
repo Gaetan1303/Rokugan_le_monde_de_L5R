@@ -4,9 +4,8 @@ services:
     env: node
     region: frankfurt
     plan: free
-    rootDir: gamemaster-backend
-    buildCommand: yarn install
-    startCommand: yarn start
+    buildCommand: cd gamemaster-backend && yarn install
+    startCommand: cd gamemaster-backend && yarn start
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
