@@ -95,6 +95,9 @@ app.use(securityLogger);
 // 6. Rate limiting global
 app.use('/api', apiLimiter);
 
+// 7. Fichiers statiques (favicon, etc.)
+app.use(express.static('public'));
+
 // ============================================
 // ROUTES API
 // ============================================
@@ -144,14 +147,15 @@ socketHandler(io, wsAuth);
 
 // Gestionnaire d'erreurs global
 app.use((err, req, res, next) => {
+  // Logging détaillé côté serveur (toujours visible dans les logs Render)
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.error('Erreur serveur:', err.message);
+  console.error('Route:', req.method, req.path);
+  console.error('Query:', JSON.stringify(req.query));
+  console.error('Stack:', err.stack);
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
-  // Log complet en développement seulement
-  if (process.env.NODE_ENV === 'development') {
-    console.error(err.stack);
-  }
-  
-  // Ne jamais exposer les détails d'erreur en production
+  // Ne jamais exposer les détails d'erreur en production (côté client)
   const errorResponse = {
     success: false,
     message: process.env.NODE_ENV === 'production' 

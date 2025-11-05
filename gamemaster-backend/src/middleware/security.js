@@ -62,9 +62,10 @@ const strictLimiter = rateLimit({
 });
 
 // . SANITIZATION - Protection contre les injections
+// Note: mongoSanitize et xss-clean désactivés (incompatibles Express 5 - req.query readonly)
 const sanitizeData = [
-  mongoSanitize(), // Nettoie les données contre NoSQL injection
-  xss(), // Nettoie contre XSS
+  // mongoSanitize(), // DÉSACTIVÉ: incompatible avec Express 5
+  // xss(), // DÉSACTIVÉ: incompatible avec Express 5
   hpp() // Protection contre HTTP Parameter Pollution
 ];
 

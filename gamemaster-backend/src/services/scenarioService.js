@@ -29,7 +29,7 @@ class ScenarioService {
   loadJson(filename) {
     try {
       const file = path.join(this.DATA_DIR, filename);
-      const raw = fs.readFileSync(file, 'utf-');
+      const raw = fs.readFileSync(file, 'utf-8');
       return JSON.parse(raw);
     } catch (e) {
       return null;

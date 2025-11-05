@@ -8,7 +8,7 @@ const DATA_DIR = path.join(__dirname, '../../data');
 async function loadJsonFile(filename) {
     try {
         const filePath = path.join(DATA_DIR, filename);
-        const data = await fs.readFile(filePath, 'utf-');
+        const data = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(data);
     } catch (error) {
         console.error(`Error loading ${filename}:`, error);
