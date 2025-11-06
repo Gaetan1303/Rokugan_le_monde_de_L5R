@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "gm-l5r",
   "version": "1.0.0",
   "description": "GameMaster L5R - Application complète",
@@ -18,5 +19,9 @@
   "license": "ISC",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "typescript": "^5.9.3"
   }
 }
