@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "GameMaster L5R - Application complète",
   "scripts": {
-  "start": "cd gamemaster-backend && node src/server.js",
+  "start": "cd gamemaster-backend && node dist/server.js",
   "dev": "cd gamemaster-backend && nodemon src/server.js",
   "install": "cd gamemaster-backend && yarn install",
   "test": "cd gamemaster-backend && yarn test",
