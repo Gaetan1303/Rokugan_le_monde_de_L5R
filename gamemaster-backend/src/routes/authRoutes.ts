@@ -1,7 +1,15 @@
-const express = require('express');
-const router = express.Router();
-const wsAuth = require('../middleware/wsAuth');
+/**
+ * [DEV SENIOR] Routes Auth - expose les endpoints REST pour l'authentification WebSocket.
+ * - Génération de tokens JWT, validation des identités, sécurité des connexions temps réel.
+ * - Adapter les routes selon l'évolution des besoins métier et la politique de sécurité.
+ */
 
+// [IMPORTS] Import des modules Express et du middleware d'authentification WebSocket
+import express from 'express';
+const router = express.Router();
+import wsAuth from '../middleware/wsAuth.js';
+
+// [MAPPING] Mapping des endpoints vers la logique d'authentification WebSocket
 /**
  *  Routes d'authentification pour WebSocket
  * Génère des tokens JWT pour les connexions WebSocket sécurisées
@@ -93,12 +101,16 @@ router.post('/verify-token', (req, res) => {
     });
 
   } catch (error) {
+    let message = 'Erreur inconnue';
+    if (error instanceof Error) {
+      message = error.message;
+    }
     res.status(401).json({
       success: false,
       valid: false,
-      message: error.message
+      message
     });
   }
 });
 
-module.exports = router;
+export default router;
