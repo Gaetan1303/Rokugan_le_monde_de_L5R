@@ -1,49 +1,57 @@
-// Service de gestion des rooms GameMaster en mémoire
-class RoomService {
+/**
+ * [DEV SENIOR] Service Room - logique métier et accès aux rooms.
+ * - Centralise les opérations sur les rooms, gestion des joueurs, accès et stats.
+ * - Respecter la séparation des responsabilités et documenter toute évolution majeure.
+ */
+
+// [IMPORTS] Import des modèles et interfaces nécessaires
+import type { IRoomService } from './IRoomService.js';
+import { Room } from '../models/Room.js';
+
+export class RoomService implements IRoomService {
+  rooms: Map<string, Room>;
+
   constructor() {
-    this.rooms = new Map();
+    this.rooms = new Map<string, Room>();
     console.log('Service de gestion des rooms GameMaster initialisé');
   }
 
-  createRoom(name, gmId, gmName, scenario = null, isPrivate = false, password = null) {
-    const Room = require('../models/Room');
+  createRoom(name: string, gmId: string, gmName: string, scenario: string = '', isPrivate: boolean = false, password: string | null = null): Room {
     const room = new Room(name, gmId, gmName, scenario);
-    
     room.isPrivate = isPrivate;
     room.password = password;
-    
     this.rooms.set(room.id, room);
     console.log(`Nouvelle room créée: ${room.name} (${room.id}) par ${gmName}`);
     return room;
   }
 
-  getRoomById(roomId) {
+  getRoomById(roomId: string): Room | undefined {
     return this.rooms.get(roomId);
   }
 
-  getAllRooms() {
+  getAllRooms(): Room[] {
     return Array.from(this.rooms.values());
   }
 
-  getPublicRooms() {
+  getPublicRooms(): Room[] {
     return Array.from(this.rooms.values())
-      .filter(room => !room.isPrivate)
-      .sort((a, b) => b.lastActivity - a.lastActivity); // Trier par activité récente
+      .filter((room: Room) => !room.isPrivate)
+      .sort((a: Room, b: Room) => b.lastActivity.getTime() - a.lastActivity.getTime());
   }
 
-  getRoomsByGM(gmId) {
+  getRoomsByGM(gmId: string): Room[] {
     return Array.from(this.rooms.values())
-      .filter(room => room.gmId === gmId)
-      .sort((a, b) => b.createdAt - a.createdAt);
+      .filter((room: Room) => room.gmId === gmId)
+      .sort((a: Room, b: Room) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  getRoomsByPlayer(playerId) {
+  getRoomsByPlayer(playerId: string): Room[] {
     return Array.from(this.rooms.values())
-      .filter(room => room.players.some(player => player.id === playerId))
-      .sort((a, b) => b.lastActivity - a.lastActivity);
+      .filter((room: Room) => room.players.some((player: any) => player.id === playerId))
+      .sort((a: Room, b: Room) => b.lastActivity.getTime() - a.lastActivity.getTime());
   }
 
-  deleteRoom(roomId) {
+  deleteRoom(roomId: string): boolean {
     const room = this.rooms.get(roomId);
     if (room) {
       console.log(`Room supprimée: ${room.name} (${roomId})`);
@@ -52,7 +60,7 @@ class RoomService {
     return false;
   }
 
-  addPlayerToRoom(roomId, playerId, playerName, character = null, password = null) {
+  addPlayerToRoom(roomId: string, playerId: string, playerName: string, character?: any, password?: string | null): any {
     const room = this.getRoomById(roomId);
     if (!room) {
       throw new Error('Room non trouvée');
@@ -66,24 +74,24 @@ class RoomService {
       throw new Error('Cette partie est terminée');
     }
 
-    const player = room.addPlayer(playerId, playerName, character);
+  const player = room.addPlayer(playerId, playerName, character ?? undefined);
     console.log(`${playerName} a rejoint la room ${room.name} (${roomId})`);
     return player;
   }
 
-  updatePlayerCharacter(roomId, playerId, character) {
+  updatePlayerCharacter(roomId: string, playerId: string, character: any): any {
     const room = this.getRoomById(roomId);
     if (!room) throw new Error('Room non trouvée');
     return room.updatePlayerCharacter(playerId, character);
   }
 
-  getPlayer(roomId, playerId) {
+  getPlayer(roomId: string, playerId: string): any {
     const room = this.getRoomById(roomId);
     if (!room) throw new Error('Room non trouvée');
     return room.players.find(p => p.id === playerId) || null;
   }
 
-  removePlayerFromRoom(roomId, playerId) {
+  removePlayerFromRoom(roomId: string, playerId: string): any {
     const room = this.getRoomById(roomId);
     if (!room) {
       throw new Error('Room non trouvée');
@@ -105,7 +113,7 @@ class RoomService {
     return { roomDeleted: false, player: removedPlayer };
   }
 
-  updateRoomStatus(roomId, status) {
+  updateRoomStatus(roomId: string, status: string): any {
     const room = this.getRoomById(roomId);
     if (!room) {
       throw new Error('Room non trouvée');
@@ -119,7 +127,7 @@ class RoomService {
     return room;
   }
 
-  addChatMessage(roomId, senderId, senderName, message) {
+  addChatMessage(roomId: string, senderId: string, senderName: string, message: string): any {
     const room = this.getRoomById(roomId);
     if (!room) {
       throw new Error('Room non trouvée');
@@ -132,7 +140,7 @@ class RoomService {
     return chatMessage;
   }
 
-  updateGameData(roomId, updates) {
+  updateGameData(roomId: string, updates: any): any {
     const room = this.getRoomById(roomId);
     if (!room) {
       throw new Error('Room non trouvée');
@@ -144,7 +152,7 @@ class RoomService {
   }
 
   // Nettoyer les rooms vides ou anciennes
-  cleanupRooms() {
+  cleanupRooms(): number {
     const now = new Date();
     const maxAge = 24 * 60 * 60 * 1000; // 24 heures
     const emptyRoomMaxAge = 2 * 60 * 60 * 1000; // 2 heures pour les rooms vides
@@ -156,19 +164,19 @@ class RoomService {
       let reason = '';
 
       // Supprimer les rooms vides depuis plus de 2 heures
-      if (room.players.length === 0 && (now - room.createdAt) > emptyRoomMaxAge) {
+  if (room.players.length === 0 && (now.getTime() - room.createdAt.getTime()) > emptyRoomMaxAge) {
         shouldDelete = true;
         reason = 'room vide depuis plus de 2 heures';
       }
       
       // Supprimer les rooms très anciennes sans activité récente
-      else if ((now - room.lastActivity) > maxAge && room.status === 'waiting') {
+  else if ((now.getTime() - room.lastActivity.getTime()) > maxAge && room.status === 'waiting') {
         shouldDelete = true;
         reason = 'inactivité depuis plus de 24 heures';
       }
       
       // Supprimer les rooms terminées depuis plus de 24 heures
-      else if (room.status === 'completed' && (now - room.lastActivity) > maxAge) {
+  else if (room.status === 'completed' && (now.getTime() - room.lastActivity.getTime()) > maxAge) {
         shouldDelete = true;
         reason = 'partie terminée depuis plus de 24 heures';
       }
@@ -220,4 +228,5 @@ setTimeout(() => {
   roomService.cleanupRooms();
 }, 5 * 60 * 1000);
 
-module.exports = roomService;
+// [EXPORT] Export du service principal pour intégration dans les contrôleurs
+export default roomService;

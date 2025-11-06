@@ -1,81 +1,83 @@
-require('dotenv').config({ 
-  path: process.env.NODE_ENV === 'production' 
-    ? '.env.production' 
-    : '.env.development' 
+/**
+ * [DEV SENIOR] Point d'entrée principal du backend GameMaster L5R
+ * - Structure modulaire, sécurité renforcée, gestion des erreurs et du temps réel.
+ * - Respecter la séparation des responsabilités et documenter toute évolution majeure.
+ */
+
+// [SECURITE] Chargement dynamique des variables d'environnement selon le contexte d'exécution.
+import dotenv from 'dotenv';
+dotenv.config({
+  path: process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env.development'
 });
 
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
+// [ARCHITECTURE] Import des dépendances principales (Express, HTTP, Socket.io, CORS)
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import cors from 'cors';
 
-const roomRoutes = require('./routes/roomRoutes');
-const referenceRoutes = require('./routes/referenceRoutes');
-const scenarioRoutes = require('./routes/scenarioRoutes');
-const frontendRoutes = require('./routes/frontendRoutes');
-const authRoutes = require('./routes/authRoutes');
-const socketHandler = require('./services/socketHandler');
+// [ROUTAGE] Import des routes API et du handler WebSocket
+import roomRoutes from './routes/room.routes.js';
+import referenceRoutes from './routes/referenceRoutes.js';
+import scenarioRoutes from './routes/scenarioRoutes.js';
+import frontendRoutes from './routes/frontendRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import socketHandler from './services/socketHandler.js';
 
-//  MIDDLEWARES DE SÉCURITÉ
-const {
-  helmetConfig,
-  apiLimiter,
-  strictLimiter,
-  sanitizeData,
-  validateOrigin,
-  securityLogger,
-  requestSizeLimit
-} = require('./middleware/security');
-const wsAuth = require('./middleware/wsAuth');
+// [SECURITE] Import des middlewares de sécurité et d'authentification WebSocket
+import { helmetConfig, apiLimiter, strictLimiter, sanitizeData, validateOrigin, securityLogger, requestSizeLimit } from './middleware/security.js';
+import wsAuth from './middleware/wsAuth.js';
 
+// [INITIALISATION] Création de l'application Express et du serveur HTTP
 const app = express();
 const server = http.createServer(app);
 
-app.set('trust proxy', true); // Pour correct IP si derrière un proxy
+// [EXPORT] Export de l'instance Express pour les tests ou l'intégration
+export default app;
 
-// CONFIGURATION DES ORIGINES AUTORISÉES
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : [
-      "http://localhost:4200",
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "https://gaetan1303.github.io"
-    ];
+// [INFRA] Active le mode proxy pour récupérer l'IP réelle derrière un reverse proxy
+app.set('trust proxy', true);
 
+// [SECURITE] Définition des origines autorisées pour CORS (à adapter selon le contexte déploiement)
+const allowedOrigins = [
+  "https://gaetan1303.github.io/JDR-test/"
+];
+
+// [LOG] Affichage des origines CORS configurées pour vérification en dev
 console.log(`CORS configuré pour: ${allowedOrigins.join(', ')}`);
 
-// SOCKET.IO AVEC AUTHENTIFICATION ET CORS STRICT
-const io = socketIo(server, {
+// [TEMPS REEL] Initialisation de Socket.io avec CORS strict et paramètres de sécurité WebSocket
+const io = new SocketIOServer(server, {
   cors: {
     origin: validateOrigin(allowedOrigins),
     methods: ["GET", "POST"],
     credentials: true
   },
-  // Sécurité WebSocket
-  pingTimeout: parseInt(process.env.WS_TIMEOUT) || 60000,
-  pingInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL) || 30000,
+  pingTimeout: parseInt(process.env.WS_TIMEOUT ?? '60000'),
+  pingInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL ?? '30000'),
   maxHttpBufferSize: 1e6, // 1MB max par message
   transports: ['websocket', 'polling'], // Préférer websocket
   allowEIO3: false // Désactiver les anciennes versions
 });
 
-//  Authentification WebSocket
-// TEMPORAIREMENT DÉSACTIVÉ pour tests
+// [SECURITE] Authentification WebSocket (à activer impérativement en production)
 // if (process.env.NODE_ENV === 'production') {
 //   io.use(wsAuth.middlewareSocketIO());
 // }
 
 // ============================================
-// MIDDLEWARES DE SÉCURITÉ HTTP
+// [SECURITE] Middlewares HTTP : headers, CORS, rate limiting, sanitization
 // ============================================
 
-// 1. Helmet - Headers de sécurité
+// [SECURITE] Activation de Helmet pour renforcer les headers HTTP (désactivable via env)
 if (process.env.HELMET_ENABLED !== 'false') {
   app.use(helmetConfig);
 }
 
-// 2. CORS strict
+// [SECURITE] CORS strict pour limiter les origines et méthodes autorisées
 app.use(cors({
   origin: validateOrigin(allowedOrigins),
   credentials: true,
@@ -85,40 +87,40 @@ app.use(cors({
   maxAge: 86400 // Cache preflight 24h
 }));
 
-// 3. Limitation de taille des requêtes (Express 5 natif)
+// [SECURITE] Limitation stricte de la taille des payloads pour éviter les attaques DoS
 app.use(express.json({ limit: requestSizeLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestSizeLimit }));
 
-// 4. Sanitization des données
+// [SECURITE] Nettoyage des données entrantes pour éviter les injections
 app.use(sanitizeData);
 
-// 5. Logger de sécurité
+// [MONITORING] Logger de sécurité pour tracer toutes les requêtes et détecter les comportements suspects
 app.use(securityLogger);
 
-// 6. Rate limiting global
+// [SECURITE] Rate limiting global sur toutes les routes API pour limiter les abus
 app.use('/api', apiLimiter);
 
-// 7. Fichiers statiques (favicon, etc.)
+// [INFRA] Mise à disposition des fichiers statiques (favicon, assets, etc.)
 app.use(express.static('public'));
 
 // ============================================
-// ROUTES API
+// [ROUTAGE] Définition des routes API et des endpoints principaux
 // ============================================
 
-// Routes d'authentification (sans rate limit strict)
+// [ROUTAGE] Endpoint d'authentification (rate limit allégé)
 app.use('/api/auth', authRoutes);
 
-// Routes avec rate limiting strict pour création
+// [ROUTAGE] Endpoints rooms et scenarios avec rate limiting strict pour éviter le spam
 app.use('/api/rooms', strictLimiter, roomRoutes);
 app.use('/api/scenarios', strictLimiter, scenarioRoutes);
 
-// Routes normales
+// [ROUTAGE] Endpoints pour les pages statiques et la documentation de référence
 app.use('/api/reference', referenceRoutes);
 app.use('/api/frontend', frontendRoutes);
 
-// Route de santé du serveur (sans rate limit)
-app.get('/api/health', (req, res) => {
-  res.json({ 
+// [MONITORING] Endpoint de health check pour le monitoring et l'orchestration
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({
     status: 'healthy',
     message: 'Serveur GameMaster L5R opérationnel',
     timestamp: new Date().toISOString(),
@@ -127,29 +129,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Route pour obtenir les statistiques (protégée)
-app.get('/api/stats', (req, res) => {
+// [MONITORING] Endpoint pour récupérer les statistiques serveur (à sécuriser en production)
+app.get('/api/stats', (req: Request, res: Response) => {
   // Note: En production, protéger cette route avec authentification
   const stats = {
     websocket: wsAuth.getConnectionStats(),
     timestamp: new Date().toISOString()
   };
-  
   res.json({
     success: true,
     stats: stats
   });
 });
 
-// Gestion des WebSockets
+// [TEMPS REEL] Initialisation du handler WebSocket pour la gestion des connexions et des événements
 socketHandler(io, wsAuth);
 
 // ============================================
-// GESTION DES ERREURS
+// [ROBUSTESSE] Gestion globale des erreurs HTTP et des routes non trouvées
 // ============================================
 
-// Gestionnaire d'erreurs global
-app.use((err, req, res, next) => {
+// [ROBUSTESSE] Middleware global de gestion des erreurs : log serveur + réponse adaptée côté client
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   // Logging détaillé côté serveur (toujours visible dans les logs Render)
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.error('Erreur serveur:', err.message);
@@ -157,7 +158,6 @@ app.use((err, req, res, next) => {
   console.error('Query:', JSON.stringify(req.query));
   console.error('Stack:', err.stack);
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
   // Ne jamais exposer les détails d'erreur en production (côté client)
   const errorResponse = {
     success: false,
@@ -165,12 +165,11 @@ app.use((err, req, res, next) => {
       ? 'Une erreur est survenue' 
       : err.message
   };
-  
   res.status(err.status || 500).json(errorResponse);
 });
 
-// Route 404
-app.use((req, res) => {
+// [ROBUSTESSE] Middleware pour les routes non trouvées (404)
+app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: 'Route non trouvée',
@@ -179,11 +178,12 @@ app.use((req, res) => {
 });
 
 // ============================================
-// DÉMARRAGE DU SERVEUR
+// [INFRA] Démarrage du serveur HTTP et gestion des logs de configuration
 // ============================================
 
 const PORT = process.env.PORT || 3000;
 
+// [INFRA] Démarrage du serveur et affichage des paramètres clés en console
 server.listen(PORT, () => {
   console.log('');
   console.log('====================================');
@@ -202,7 +202,7 @@ server.listen(PORT, () => {
   console.log('');
 });
 
-// Gestion des arrêts propres
+// [INFRA] Gestion propre des signaux d'arrêt (SIGTERM/SIGINT) pour éviter les corruptions de données
 process.on('SIGTERM', () => {
   console.log('SIGTERM reçu. Arrêt du serveur...');
   server.close(() => {
@@ -218,5 +218,3 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
-
-module.exports = app;

@@ -1,8 +1,14 @@
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
-const hpp = require('hpp');
+/**
+ * [DEV SENIOR] Middleware de sécurité - centralise la configuration des protections HTTP.
+ * - Headers, rate limiting, sanitization, validation d'origine, logger.
+ * - Adapter chaque middleware selon le contexte de déploiement et les besoins métier.
+ */
+
+// [IMPORTS] Import des modules nécessaires pour la sécurité
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * MIDDLEWARE DE SÉCURITÉ - PROTECTION MULTICOUCHE
@@ -37,8 +43,8 @@ const helmetConfig = helmet({
 
 // . RATE LIMITING - Protection DDoS
 const apiLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 min
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '900000'), // 15 min par défaut
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? '100'),
   message: {
     success: false,
     message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.'
@@ -46,7 +52,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Skip rate limiting pour les health checks
-  skip: (req) => req.path === '/api/health',
+  skip: (req: Request) => req.path === '/api/health',
   // Configuration pour Render (behind proxy)
   validate: {
     trustProxy: false, // Désactive la validation stricte du trust proxy
@@ -79,8 +85,8 @@ const sanitizeData = [
 ];
 
 // . VALIDATION DES ORIGINES CORS
-const validateOrigin = (allowedOrigins) => {
-  return (origin, callback) => {
+const validateOrigin = (allowedOrigins: string[]) => {
+  return (origin: string | undefined, callback: Function) => {
     // Autoriser les requêtes sans origin (ex: Postman, mobile apps)
     if (!origin) {
       return callback(null, true);
@@ -100,7 +106,7 @@ const validateOrigin = (allowedOrigins) => {
 };
 
 // . LOGGER DE SÉCURITÉ - Détection d'activité suspecte
-const securityLogger = (req, res, next) => {
+const securityLogger = (req: Request, res: Response, next: NextFunction) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
   const userAgent = req.get('user-agent') || 'unknown';
@@ -141,7 +147,8 @@ const securityLogger = (req, res, next) => {
 // LIMITATION DE TAILLE DES REQUÊTES
 const requestSizeLimit = process.env.MAX_REQUEST_SIZE || '10kb';
 
-module.exports = {
+export {
+  // [EXPORTS] Exporte tous les middlewares et utilitaires de sécurité pour usage global
   helmetConfig,
   apiLimiter,
   strictLimiter,

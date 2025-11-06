@@ -1,11 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const fs = require('fs').promises;
-const path = require('path');
+/**
+ * [DEV SENIOR] Routes Frontend - expose les endpoints REST pour la consommation côté client.
+ * - Formatage des données pour compatibilité frontend, accès aux données de référence.
+ * - Adapter les routes selon l'évolution des besoins UI et la structure des données.
+ */
 
+// [IMPORTS] Import des modules Express, FS et Path pour la gestion des fichiers et des routes
+import express from 'express';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// [ROUTER] Instanciation du routeur Express pour centraliser les endpoints frontend
+const router = express.Router();
+
+// [CONFIG] Définition du répertoire de données pour les accès JSON
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, '../../data');
 
-async function loadJsonFile(filename) {
+// [UTILS] Fonction utilitaire pour charger dynamiquement un fichier JSON
+async function loadJsonFile(filename: string): Promise<any> {
     try {
         const filePath = path.join(DATA_DIR, filename);
         const data = await fs.readFile(filePath, 'utf-8');
@@ -19,7 +32,7 @@ async function loadJsonFile(filename) {
 // Frontend-compatible endpoints - Return data in format matching .data.ts files
 
 // GET /api/frontend/clans - Format compatible avec CLANS array
-router.get('/clans', async (req, res) => {
+router.get('/clans', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('clans.json');
         // Return just the clans array for frontend compatibility
@@ -30,11 +43,11 @@ router.get('/clans', async (req, res) => {
 });
 
 // GET /api/frontend/schools - Format compatible avec SCHOOLS array
-router.get('/schools', async (req, res) => {
+router.get('/schools', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('ecoles.json');
         // Transform to frontend format
-        const schools = (data.ecoles || []).map(school => ({
+    const schools = (data.ecoles || []).map((school: any) => ({
             name: school.nom,
             type: school.type,
             clan: school.clan,
@@ -57,10 +70,10 @@ router.get('/schools', async (req, res) => {
 });
 
 // GET /api/frontend/advantages - Format compatible avec ADVANTAGES array
-router.get('/advantages', async (req, res) => {
+router.get('/advantages', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('avantages.json');
-        const advantages = (data.avantages || []).map(adv => ({
+    const advantages = (data.avantages || []).map((adv: any) => ({
             name: adv.nom,
             type: adv.type,
             cost: adv.cout,
@@ -75,10 +88,10 @@ router.get('/advantages', async (req, res) => {
 });
 
 // GET /api/frontend/disadvantages - Format compatible avec DISADVANTAGES array
-router.get('/disadvantages', async (req, res) => {
+router.get('/disadvantages', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('desavantages.json');
-        const disadvantages = (data.desavantages || []).map(dis => ({
+    const disadvantages = (data.desavantages || []).map((dis: any) => ({
             name: dis.nom,
             type: dis.type,
             points: dis.points,
@@ -93,10 +106,10 @@ router.get('/disadvantages', async (req, res) => {
 });
 
 // GET /api/frontend/spells - Format compatible avec SPELLS array
-router.get('/spells', async (req, res) => {
+router.get('/spells', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('sorts.json');
-        const spells = (data.sorts || []).map(spell => ({
+    const spells = (data.sorts || []).map((spell: any) => ({
             name: spell.nom,
             element: spell.element,
             mastery: spell.maitrise,
@@ -113,10 +126,10 @@ router.get('/spells', async (req, res) => {
 });
 
 // GET /api/frontend/maho - Format compatible avec MAHO_SPELLS array
-router.get('/maho', async (req, res) => {
+router.get('/maho', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('maho.json');
-        const mahoSpells = (data.maho || []).map(spell => ({
+    const mahoSpells = (data.maho || []).map((spell: any) => ({
             name: spell.nom,
             mastery: spell.maitrise,
             bloodCost: spell.cout_sang,
@@ -133,10 +146,10 @@ router.get('/maho', async (req, res) => {
 });
 
 // GET /api/frontend/kiho - Format compatible avec KIHO array
-router.get('/kiho', async (req, res) => {
+router.get('/kiho', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('kiho.json');
-        const kiho = (data.kiho || []).map(k => ({
+    const kiho = (data.kiho || []).map((k: any) => ({
             name: k.nom,
             element: k.element,
             type: k.type,
@@ -151,11 +164,11 @@ router.get('/kiho', async (req, res) => {
 });
 
 // GET /api/frontend/equipment - Format compatible avec WEAPONS, ARMOR, ITEMS
-router.get('/equipment', async (req, res) => {
+router.get('/equipment', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('equipement.json');
         const equipment = {
-            weapons: (data.armes || []).map(w => ({
+            weapons: (data.armes || []).map((w: any) => ({
                 name: w.nom,
                 type: w.type,
                 damage: w.degats,
@@ -164,7 +177,7 @@ router.get('/equipment', async (req, res) => {
                 price: w.prix,
                 description: w.description || ''
             })),
-            armor: (data.armures || []).map(a => ({
+            armor: (data.armures || []).map((a: any) => ({
                 name: a.nom,
                 type: a.type,
                 tn: a.nd_armure,
@@ -172,7 +185,7 @@ router.get('/equipment', async (req, res) => {
                 price: a.prix,
                 description: a.description || ''
             })),
-            items: (data.objets || []).map(i => ({
+            items: (data.objets || []).map((i: any) => ({
                 name: i.nom,
                 type: i.type || 'general',
                 price: i.prix,
@@ -186,10 +199,10 @@ router.get('/equipment', async (req, res) => {
 });
 
 // GET /api/frontend/techniques - Format compatible avec CLAN_TECHNIQUES et KATA
-router.get('/techniques', async (req, res) => {
+router.get('/techniques', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('techniques.json');
-        const techniques = (data.techniques || []).map(t => ({
+    const techniques = (data.techniques || []).map((t: any) => ({
             name: t.nom,
             clan: t.clan,
             type: t.type,
@@ -204,12 +217,12 @@ router.get('/techniques', async (req, res) => {
 });
 
 // GET /api/frontend/kata - Format compatible avec KATA array
-router.get('/kata', async (req, res) => {
+router.get('/kata', async (req: express.Request, res: express.Response) => {
     try {
         const data = await loadJsonFile('techniques.json');
         const kata = (data.techniques || [])
-            .filter(t => t.type === 'kata')
-            .map(t => ({
+            .filter((t: any) => t.type === 'kata')
+            .map((t: any) => ({
                 name: t.nom,
                 clan: t.clan,
                 mastery: t.rang || t.mastery || 1,
@@ -223,34 +236,21 @@ router.get('/kata', async (req, res) => {
 });
 
 // GET /api/frontend/all - Retourne toutes les données en un seul appel
-router.get('/all', async (req, res) => {
+router.get('/all', async (req: express.Request, res: express.Response) => {
     try {
-        const [clans, schools, advantages, disadvantages, spells, maho, kiho, equipment, techniques] = await Promise.all([
-            router.handle({ path: '/clans' }, { json: () => {} }),
-            router.handle({ path: '/schools' }, { json: () => {} }),
-            router.handle({ path: '/advantages' }, { json: () => {} }),
-            router.handle({ path: '/disadvantages' }, { json: () => {} }),
-            router.handle({ path: '/spells' }, { json: () => {} }),
-            router.handle({ path: '/maho' }, { json: () => {} }),
-            router.handle({ path: '/kiho' }, { json: () => {} }),
-            router.handle({ path: '/equipment' }, { json: () => {} }),
-            router.handle({ path: '/techniques' }, { json: () => {} })
-        ].map(p => p.catch(e => [])));
-
-        res.json({
-            clans,
-            schools,
-            advantages,
-            disadvantages,
-            spells,
-            maho,
-            kiho,
-            equipment,
-            techniques
-        });
+        const clans = await loadJsonFile('clans.json');
+        const schools = await loadJsonFile('ecoles.json');
+        const advantages = await loadJsonFile('avantages.json');
+        const disadvantages = await loadJsonFile('desavantages.json');
+        const spells = await loadJsonFile('sorts.json');
+        const maho = await loadJsonFile('maho.json');
+        const kiho = await loadJsonFile('kiho.json');
+        const equipment = await loadJsonFile('equipement.json');
+        const techniques = await loadJsonFile('techniques.json');
+        res.json({ clans, schools, advantages, disadvantages, spells, maho, kiho, equipment, techniques });
     } catch (error) {
         res.status(500).json({ error: 'Failed to load data bundle' });
     }
 });
 
-module.exports = router;
+export default router;

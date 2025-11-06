@@ -1,13 +1,33 @@
-const roomService = require('./roomService');
-const scenarioService = require('./scenarioService');
+/**
+ * [DEV SENIOR] Handler Socket.io - gestion des connexions, événements et stats WebSocket.
+ * - Centralise la logique temps réel, sécurité et monitoring des sessions.
+ * - Adapter la configuration selon les besoins métier et la charge attendue.
+ */
+
+// [IMPORTS] Import des modules nécessaires pour la gestion des sockets et des services
+import { Server, Socket } from 'socket.io';
+import { RoomService } from './roomService.js';
+import { ScenarioService } from './scenarioService.js';
+
+const roomService = new RoomService();
+const scenarioService = new ScenarioService();
 
 // Gestion des connexions WebSocket pour GameMaster L5R
-function socketHandler(io, wsAuth) {
+type UserInfo = {
+  userId: string;
+  roomId: string;
+  userType: 'gm' | 'player';
+  userName: string;
+  connectedAt: Date;
+};
+
+function socketHandler(io: Server, wsAuth: any) {
   // Map pour associer les socket IDs aux users
-  const connectedUsers = new Map();
+  const connectedUsers = new Map<string, UserInfo>();
 
   io.on('connection', (socket) => {
-    const userData = socket.userData || { userId: socket.id, userName: 'Guest', authenticated: false };
+  // Utilisation de socket.data pour stocker les infos utilisateur (Socket.IO v4+)
+  const userData = (socket as any).data?.userData || { userId: socket.id, userName: 'Guest', authenticated: false };
     const ip = socket.handshake.address;
     
     console.log(`Nouvelle connexion WebSocket: ${socket.id} (${userData.userName}) - IP: ${ip}`);
@@ -59,10 +79,18 @@ function socketHandler(io, wsAuth) {
             scenarioData = scenario; // simple titre/label
           }
         } catch (e) {
-          console.warn('create-room: scénario ignoré suite à erreur:', e.message);
+          console.warn('create-room: scénario ignoré suite à erreur:', (e as Error).message);
         }
 
-        const room = roomService.createRoom(name, gmId, gmName, scenarioData);
+  // Si scenarioData est null, passer une chaîne vide
+        // Convertir scenarioData en string si nécessaire
+        let scenarioString: string = '';
+        if (typeof scenarioData === 'string') {
+          scenarioString = scenarioData;
+        } else if (scenarioData && typeof scenarioData === 'object') {
+          scenarioString = JSON.stringify(scenarioData);
+        }
+        const room = roomService.createRoom(name, gmId, gmName, scenarioString);
         // Ajuster options de la room selon la demande du front
         room.maxPlayers = Math.max(1, Math.min(10, Number(maxPlayers) || 6));
         room.isPrivate = !isPublic;
@@ -73,7 +101,7 @@ function socketHandler(io, wsAuth) {
         callback && callback({ ok: true, room: room.toJSON() });
       } catch (error) {
         console.error('Erreur create-room:', error);
-        callback && callback({ ok: false, error: error.message });
+  callback && callback({ ok: false, error: (error as Error).message });
       }
     });
 
@@ -81,10 +109,10 @@ function socketHandler(io, wsAuth) {
     socket.on('list-rooms', (callback) => {
       try {
         const rooms = roomService.getPublicRooms();
-        callback && callback({ ok: true, rooms: rooms.map(r => r.toPublicJSON()) });
+  callback && callback({ ok: true, rooms: rooms.map((r: any) => r.toPublicJSON()) });
       } catch (error) {
         console.error('Erreur list-rooms:', error);
-        callback && callback({ ok: false, error: error.message });
+  callback && callback({ ok: false, error: (error as Error).message });
       }
     });
 
@@ -96,7 +124,7 @@ function socketHandler(io, wsAuth) {
         callback && callback({ ok: true, room: room.toJSON() });
       } catch (error) {
         console.error('Erreur find-room:', error);
-        callback && callback({ ok: false, error: error.message });
+  callback && callback({ ok: false, error: (error as Error).message });
       }
     });
     socket.on('join-room', (data, callback) => {
@@ -113,7 +141,7 @@ function socketHandler(io, wsAuth) {
 
         // Vérifier si l'utilisateur a le droit de rejoindre cette room
         const isGM = room.gmId === userId;
-        let isPlayer = room.players.some(p => p.id === userId);
+  let isPlayer = room.players.some((p: any) => p.id === userId);
 
         // Compat: si le joueur n'existe pas encore et que c'est un player, tenter l'ajout auto
         if (!isGM && !isPlayer && userType === 'player') {
@@ -121,8 +149,8 @@ function socketHandler(io, wsAuth) {
             roomService.addPlayerToRoom(roomId, userId, userName, character || null);
             isPlayer = true;
           } catch (e) {
-            const errPayload = { type: 'JOIN_ERROR', message: e.message };
-            if (typeof callback === 'function') return callback({ ok: false, error: e.message });
+            const errPayload = { type: 'JOIN_ERROR', message: (e as Error).message };
+            if (typeof callback === 'function') return callback({ ok: false, error: (e as Error).message });
             socket.emit('error', errPayload);
             return;
           }
@@ -180,8 +208,8 @@ function socketHandler(io, wsAuth) {
 
       } catch (error) {
         console.error('Erreur lors de la connexion à la room:', error);
-        if (typeof callback === 'function') return callback({ ok: false, error: error.message });
-        socket.emit('error', { type: 'JOIN_ERROR', message: error.message });
+  if (typeof callback === 'function') return callback({ ok: false, error: (error as Error).message });
+  socket.emit('error', { type: 'JOIN_ERROR', message: (error as Error).message });
       }
     });
 
@@ -209,8 +237,8 @@ function socketHandler(io, wsAuth) {
 
       } catch (error) {
         console.error('Erreur update-character:', error);
-        if (typeof callback === 'function') return callback({ ok: false, error: error.message });
-        socket.emit('error', { type: 'CHARACTER_UPDATE_ERROR', message: error.message });
+  if (typeof callback === 'function') return callback({ ok: false, error: (error as Error).message });
+  socket.emit('error', { type: 'CHARACTER_UPDATE_ERROR', message: (error as Error).message });
       }
     });
 
@@ -291,7 +319,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur lors de l\'envoi du message:', error);
         socket.emit('error', { 
           type: 'CHAT_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -347,7 +375,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur lors du changement de statut:', error);
         socket.emit('error', { 
           type: 'STATUS_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -395,7 +423,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur lors de l\'action GM:', error);
         socket.emit('error', { 
           type: 'GM_ACTION_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -419,12 +447,14 @@ function socketHandler(io, wsAuth) {
 
         // Trouver la scène dans room.scenario.scenes si possible
         let currentScene = null;
-        const scenes = Array.isArray(room?.scenario?.scenes) ? room.scenario.scenes : null;
+  // Vérifier que scenario est un objet et possède scenes
+  const scenarioObj = typeof room?.scenario === 'object' && room?.scenario !== null ? room.scenario as any : null;
+  const scenes = Array.isArray(scenarioObj?.scenes) ? scenarioObj.scenes : null;
         if (scenes) {
           if (typeof sceneIndex === 'number' && scenes[sceneIndex]) {
             currentScene = { index: sceneIndex, ...scenes[sceneIndex] };
           } else if (title) {
-            const idx = scenes.findIndex(s => s.title === title);
+            const idx = scenes.findIndex((s: any) => s.title === title);
             if (idx >= 0) currentScene = { index: idx, ...scenes[idx] };
           }
         }
@@ -460,8 +490,8 @@ function socketHandler(io, wsAuth) {
 
       } catch (error) {
         console.error('Erreur set-current-scene:', error);
-        if (typeof callback === 'function') return callback({ ok: false, error: error.message });
-        socket.emit('error', { type: 'SCENE_SET_ERROR', message: error.message });
+  if (typeof callback === 'function') return callback({ ok: false, error: (error as Error).message });
+  socket.emit('error', { type: 'SCENE_SET_ERROR', message: (error as Error).message });
       }
     });
 
@@ -509,7 +539,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur lors de l\'action joueur:', error);
         socket.emit('error', { 
           type: 'PLAYER_ACTION_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -595,7 +625,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur lors du lancer de dés:', error);
         socket.emit('error', { 
           type: 'DICE_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -650,7 +680,7 @@ function socketHandler(io, wsAuth) {
         console.error('Erreur récupération utilisateurs room:', error);
         socket.emit('error', { 
           type: 'USERS_ERROR',
-          message: error.message 
+          message: (error as Error).message
         });
       }
     });
@@ -692,20 +722,32 @@ function socketHandler(io, wsAuth) {
   });
 
   // Fonction utilitaire pour obtenir les statistiques des connexions
-  io.getConnectionStats = () => {
+  // Fonction utilitaire pour obtenir les statistiques des connexions
+  function getConnectionStats() {
     const stats = {
       totalConnections: connectedUsers.size,
-      connectionsByRoom: {},
+      connectionsByRoom: {} as { [roomId: string]: number },
       connectionsByType: { gm: 0, player: 0 },
-      connectionsDetails: []
+      connectionsDetails: [] as Array<{
+        socketId: string;
+        userId: string;
+        userName: string;
+        userType: 'gm' | 'player';
+        roomId: string;
+        connectedAt: Date;
+        connectedDuration: number;
+      }>
     };
 
     for (const [socketId, userInfo] of connectedUsers.entries()) {
       // Par room
-      if (!stats.connectionsByRoom[userInfo.roomId]) {
-        stats.connectionsByRoom[userInfo.roomId] = 0;
+      if (userInfo.roomId) {
+        const roomId = userInfo.roomId as string;
+        if (typeof stats.connectionsByRoom[roomId] !== 'number') {
+          stats.connectionsByRoom[roomId] = 0;
+        }
+        stats.connectionsByRoom[roomId]!++;
       }
-      stats.connectionsByRoom[userInfo.roomId]++;
 
       // Par type
       stats.connectionsByType[userInfo.userType]++;
@@ -718,12 +760,12 @@ function socketHandler(io, wsAuth) {
         userType: userInfo.userType,
         roomId: userInfo.roomId,
         connectedAt: userInfo.connectedAt,
-        connectedDuration: new Date() - userInfo.connectedAt
+        connectedDuration: new Date().getTime() - userInfo.connectedAt.getTime()
       });
     }
 
     return stats;
-  };
+  }
 
   // Heartbeat pour nettoyer les connexions fantômes
   setInterval(() => {
@@ -746,4 +788,5 @@ function socketHandler(io, wsAuth) {
   console.log('Gestionnaire WebSocket GameMaster L5R initialisé');
 }
 
-module.exports = socketHandler;
+// [EXPORT] Export du handler principal pour intégration dans le serveur
+export default socketHandler;
