@@ -5,7 +5,8 @@
  */
 
 // [IMPORTS] Import des modules Express et du middleware d'authentification WebSocket
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
 
 const router = Router();

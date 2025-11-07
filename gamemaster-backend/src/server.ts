@@ -21,14 +21,15 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 
-// [ROUTAGE] Import des routes API et du handler WebSocket
+
 import roomRoutes from './routes/room.routes.js';
 import referenceRoutes from './routes/referenceRoutes.js';
 import scenarioRoutes from './routes/scenarioRoutes.js';
 import frontendRoutes from './routes/frontendRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import socketHandler from './services/socketHandler.js';
-import { home } from './controllers/homeController.js';
+import { home } from './controllers/HomeController.js';
+
 
 // [SECURITE] Import des middlewares de sécurité et d'authentification WebSocket
 import { helmetConfig, apiLimiter, strictLimiter, sanitizeData, validateOrigin, securityLogger, requestSizeLimit } from './middleware/security.js';
@@ -119,8 +120,7 @@ app.use('/api/scenarios', strictLimiter, scenarioRoutes);
 // [ROUTAGE] Endpoints pour les pages statiques et la documentation de référence
 app.use('/api/reference', referenceRoutes);
 app.use('/api/frontend', frontendRoutes);
-
-// [HOME] Route d'accueil
+// [ROUTAGE] Route d'accueil
 app.get('/', home);
 
 // [MONITORING] Endpoint de health check pour le monitoring et l'orchestration
@@ -218,7 +218,19 @@ AppDataSource.initialize()
     if (process.env.NODE_ENV === 'production') {
       console.error(' Erreur de connexion à la base de données. Vérifiez la configuration.');
     } else {
-      console.error(' Erreur de connexion à la base de données :', error);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('Erreur de connexion à la base de données :', error);
+      console.error('Paramètres utilisés :');
+      console.error('DATABASE_URL:', process.env.DATABASE_URL);
+      console.error('DB_HOST:', process.env.DB_HOST);
+      console.error('DB_PORT:', process.env.DB_PORT);
+      console.error('DB_USERNAME:', process.env.DB_USERNAME);
+      console.error('DB_PASSWORD:', process.env.DB_PASSWORD ? '***' : '(non défini)');
+      console.error('DB_DATABASE:', process.env.DB_DATABASE);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      if (!process.env.DATABASE_URL && (!process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_USERNAME || !process.env.DB_PASSWORD || !process.env.DB_DATABASE)) {
+        console.error(' Une ou plusieurs variables d\'environnement nécessaires à la connexion sont manquantes.');
+      }
     }
     process.exit(1);
   });

@@ -1,9 +1,14 @@
 import { DataSource } from "typeorm";
 import { User } from "./models/User.js";
 
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL n\'est pas défini dans les variables d\'environnement.');
+}
+
 export const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL,
+  url: databaseUrl,
   synchronize: true,
   logging: false,
   entities: [User],
