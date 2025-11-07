@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import fs from 'fs';
+import path from 'path';
 import { AppDataSource } from './data-source.js';
 /**
  * [DEV SENIOR] Point d'entrée principal du backend GameMaster L5R
@@ -215,22 +217,29 @@ AppDataSource.initialize()
     });
   })
   .catch((error) => {
-    if (process.env.NODE_ENV === 'production') {
-      console.error(' Erreur de connexion à la base de données. Vérifiez la configuration.');
-    } else {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('Erreur de connexion à la base de données :', error);
-      console.error('Paramètres utilisés :');
-      console.error('DATABASE_URL:', process.env.DATABASE_URL);
-      console.error('DB_HOST:', process.env.DB_HOST);
-      console.error('DB_PORT:', process.env.DB_PORT);
-      console.error('DB_USERNAME:', process.env.DB_USERNAME);
-      console.error('DB_PASSWORD:', process.env.DB_PASSWORD ? '***' : '(non défini)');
-      console.error('DB_DATABASE:', process.env.DB_DATABASE);
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      if (!process.env.DATABASE_URL && (!process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_USERNAME || !process.env.DB_PASSWORD || !process.env.DB_DATABASE)) {
-        console.error(' Une ou plusieurs variables d\'environnement nécessaires à la connexion sont manquantes.');
-      }
+    const logDir = path.resolve(process.cwd(), 'log');
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir);
+    }
+    const logPath = path.join(logDir, 'db-error.log');
+    const errorMsg = [
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Erreur de connexion à la base de données :',
+      String(error),
+      'Paramètres utilisés :',
+      `DATABASE_URL: ${process.env.DATABASE_URL}`,
+      `DB_HOST: ${process.env.DB_HOST}`,
+      `DB_PORT: ${process.env.DB_PORT}`,
+      `DB_USERNAME: ${process.env.DB_USERNAME}`,
+      `DB_PASSWORD: ${process.env.DB_PASSWORD ? '***' : '(non défini)'}`,
+      `DB_DATABASE: ${process.env.DB_DATABASE}`,
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    ].join('\n');
+    fs.appendFileSync(logPath, errorMsg + '\n');
+    console.error(errorMsg);
+    if (!process.env.DATABASE_URL && (!process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_USERNAME || !process.env.DB_PASSWORD || !process.env.DB_DATABASE)) {
+      console.error(' Une ou plusieurs variables d\'environnement nécessaires à la connexion sont manquantes.');
+      fs.appendFileSync(logPath, ' Une ou plusieurs variables d\'environnement nécessaires à la connexion sont manquantes.\n');
     }
     process.exit(1);
   });
