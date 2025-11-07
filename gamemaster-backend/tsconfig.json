@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
   "target": "ES2020",
-  "module": "nodenext",
+  "module": "esnext",
   "experimentalDecorators": true,
   "emitDecoratorMetadata": true,
+  "moduleResolution": "node",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
