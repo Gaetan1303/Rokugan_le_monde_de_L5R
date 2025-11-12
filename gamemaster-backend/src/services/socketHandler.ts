@@ -728,3 +728,5 @@ function socketHandler(io: Server, wsAuth: any) {
 
 }
 // Fin de socketHandler
+
+export default socketHandler;
