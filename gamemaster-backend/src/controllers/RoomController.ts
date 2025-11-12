@@ -24,6 +24,25 @@ export class RoomController {
     }
   }
 
+  /**
+   * Ajoute un joueur ou MJ à une room (POST /api/rooms/:roomId/players)
+   * Body: { userId, role }
+   */
+  static async addPlayerToRoom(req: Request, res: Response) {
+    try {
+      const { userId, role } = req.body;
+      const { roomId } = req.params;
+      if (!userId || !role) {
+        return res.status(400).json({ success: false, message: 'userId et role requis' });
+      }
+      // Appel du service métier (adapter selon la signature réelle)
+      const player = await roomService.addPlayerToRoom(roomId, userId, undefined, role);
+      return res.status(201).json({ success: true, player });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: (err as Error).message });
+    }
+  }
+
   static async getRoomById(req: Request, res: Response) {
     const roomId = req.params.id ?? '';
     const room = await roomService.getRoomById(roomId);
