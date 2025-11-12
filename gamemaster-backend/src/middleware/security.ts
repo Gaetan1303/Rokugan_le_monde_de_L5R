@@ -80,7 +80,7 @@ const apiLimiter = rateLimit({
 // Rate limiter strict pour les routes sensibles (création de room, etc.)
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 50, // max 50 requêtes
+  max: 20, // max 20 requêtes
   message: {
     success: false,
     message: 'Trop de tentatives. Action temporairement bloquée.'

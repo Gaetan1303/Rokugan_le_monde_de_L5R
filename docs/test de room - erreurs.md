@@ -1,6 +1,6 @@
 # Rapport de test d’erreur : test de room
 
-**Date d’exécution :** 12/11/2025 15:38:30
+**Date d’exécution :** 12/11/2025 15:41:38
 
 - **Créer une room sans token**
     - Input : `{"name":"Room sans token"}`
@@ -8,7 +8,7 @@
     - Code HTTP : 401
     - Succès : NON
     - Message : `{"error":"Vous n'êtes pas autorisé à pénétrer dans cette salle sans l'autorisation du Champion d'Émeraude."}`
-    - Durée : 325 ms
+    - Durée : 258 ms
     - Commentaire : Erreur attendue (401)
 - **Créer une room avec nom vide**
     - Input : `{"name":""}`
@@ -16,29 +16,29 @@
     - Code HTTP : 400
     - Succès : NON
     - Message : `{"error":"Un samouraï ne peut entrer dans une salle sans nom. Veuillez honorer la tradition en nommant votre salle."}`
-    - Durée : 57 ms
+    - Durée : 78 ms
     - Commentaire : Erreur attendue (400)
 - **Ajout de joueur avec mauvais rôle**
-    - Input : `{"userId":"5390700d-9668-4c89-bca4-04bff5c924e9","role":"admin"}`
+    - Input : `{"userId":"4037e987-e5bb-4380-84ee-ea7e1035ad40","role":"admin"}`
     - Attendu : 400 Bad Request
     - Code HTTP : 400
     - Succès : NON
     - Message : `{"success":false,"message":"Le rôle 'admin' n'est pas reconnu par les traditions de l'Empire d'Émeraude. Seuls les samouraïs (player) ou les maîtres du jeu (gm) peuvent rejoindre la salle."}`
-    - Durée : 46 ms
+    - Durée : 51 ms
     - Commentaire : Erreur attendue (400)
 - **Ajout de joueur sans token**
-    - Input : `{"userId":"5390700d-9668-4c89-bca4-04bff5c924e9","role":"player"}`
+    - Input : `{"userId":"4037e987-e5bb-4380-84ee-ea7e1035ad40","role":"player"}`
     - Attendu : 401 Unauthorized
-    - Code HTTP : 201
-    - Succès : OUI
-    - Message : `{"success":true,"player":{"role":"player","joinedAt":"2025-11-12T14:38:30.289Z","room":{"id":"8bb2a154-8317-4d21-a7ec-ca492ff5a60f","name":"Room pour test erreur","status":"waiting","currentScene":0,"scenesHistory":[],"maxPlayers":6,"isPrivate":false,"password":null,"createdAt":"2025-11-12T14:38:30.171Z","updatedAt":"2025-11-12T14:38:30.171Z","gm":{"id":"e577d344-e507-43dd-badd-3c01de21c738","email":"mj1762955311649@test.com","password":"$2b$10$uijd5ZrdcnrZ/RdV5vpUou3VQ9kJA619FFr9021TgZnZniEDFTVjK","name":"MJ","role":"joueur","createdAt":"2025-11-12T13:48:32.790Z"},"players":[],"scenario":null},"user":{"id":"5390700d-9668-4c89-bca4-04bff5c924e9","email":"testeur1762958308914@test.com","password":"$2b$10$B798T6JJHTr9X/ZKNkZBt.eBrnT26DisSfJDGrV/pn/5HsPaSdde6","name":"Testeur","role":"joueur","createdAt":"2025-11-12T14:38:29.613Z"},"character":null,"lastSeen":null,"id":"8b2e4d8c-dff4-44a0-8d96-2c2d160b0ecb"}}`
-    - Durée : 66 ms
-    - Commentaire : Erreur non conforme
+    - Code HTTP : 401
+    - Succès : NON
+    - Message : `{"success":false,"message":"Vous n'êtes pas autorisé à rejoindre la salle sans l'autorisation du Champion d'Émeraude."}`
+    - Durée : 48 ms
+    - Commentaire : Erreur attendue (401)
 - **Suppression d’une room inexistante**
     - Input : `{"roomId":"00000000-0000-0000-0000-000000000000"}`
     - Attendu : 404 Not Found
     - Code HTTP : 404
     - Succès : NON
     - Message : `{"success":false,"message":"Route non trouvée","path":"/api/rooms/00000000-0000-0000-0000-000000000000"}`
-    - Durée : 45 ms
+    - Durée : 57 ms
     - Commentaire : Erreur attendue (404)
