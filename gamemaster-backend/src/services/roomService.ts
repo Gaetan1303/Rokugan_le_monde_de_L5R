@@ -1,7 +1,7 @@
 
 
 // Nouvelle version RoomService pour TypeORM
-import { AppDataSource } from '../data-source';
+import { AppDataSource } from '../data-source.js';
 import { Room } from '../models/Room';
 import { PlayerInRoom } from '../models/PlayerInRoom';
 import { User } from '../models/User';
