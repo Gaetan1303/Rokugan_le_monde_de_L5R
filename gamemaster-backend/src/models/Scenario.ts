@@ -1,5 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Scene } from './Scene.js';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+@Entity()
+export class Scene {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column()
+  title!: string;
+
+  @Column('text')
+  description!: string;
+
+  @Column('simple-array', { nullable: true })
+  objectives?: string[];
+
+  @Column('simple-array', { nullable: true })
+  challenges?: string[];
+
+  @ManyToOne(() => Scenario, scenario => scenario.scenes, { onDelete: 'CASCADE' })
+  scenario!: Scenario;
+}
 
 /**
  * [DEV SENIOR] Modèle Scenario - structure et logique métier d'un scénario de jeu.
