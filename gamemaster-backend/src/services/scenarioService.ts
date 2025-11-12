@@ -11,6 +11,18 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { Scenario } from '../models/Scenario.js';
 
+// Générateur UUID v4 simple (compatible Node et navigateur)
+function generateUUIDv4() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback universel
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Types pour les données JSON
 type Clan = { nom: string };
 type Saison = { nom: string };
@@ -49,6 +61,10 @@ export class ScenarioService {
   create(payload: Partial<Scenario>): Scenario {
     // Remplacer par repo.create lors de la migration TypeORM
     const scenario = Object.assign(new Scenario(), payload || {});
+    // Génère un id UUID si absent (hors contexte TypeORM)
+    if (!scenario.id) {
+      scenario.id = generateUUIDv4();
+    }
     this.scenarios.set(scenario.id, scenario);
     return scenario;
   }
