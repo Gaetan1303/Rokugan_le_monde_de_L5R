@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Room } from './Room.js';
 import { User } from './User.js';
 
 @Entity()
@@ -8,7 +7,7 @@ export class PlayerInRoom {
   id!: string;
 
   @ManyToOne(() => require('./Room.js').Room, (room: any) => room.players, { onDelete: 'CASCADE' })
-  room!: Room;
+  room!: any;
 
   @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   user!: User;
