@@ -18,7 +18,7 @@ dotenv.config({
 
 // [ARCHITECTURE] Import des dépendances principales (Express, HTTP, Socket.io, CORS)
 import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
@@ -117,8 +117,9 @@ app.use(express.static('public'));
 app.use('/api/auth', authRoutes);
 
 // [ROUTAGE] Endpoints rooms et scenarios avec rate limiting strict pour éviter le spam
-app.use('/api/rooms', strictLimiter, roomRoutes);
-app.use('/api/scenarios', strictLimiter, scenarioRoutes);
+// strictLimiter peut être typé comme middleware; caster pour satisfaire TypeScript
+app.use('/api/rooms', strictLimiter as unknown as RequestHandler, roomRoutes);
+app.use('/api/scenarios', strictLimiter as unknown as RequestHandler, scenarioRoutes);
 
 // [ROUTAGE] Endpoints pour les pages statiques et la documentation de référence
 app.use('/api/reference', referenceRoutes);
