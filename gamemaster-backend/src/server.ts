@@ -117,9 +117,11 @@ app.use(express.static('public'));
 app.use('/api/auth', authRoutes);
 
 // [ROUTAGE] Endpoints rooms et scenarios avec rate limiting strict pour éviter le spam
-// strictLimiter peut être typé comme middleware; caster pour satisfaire TypeScript
-app.use('/api/rooms', strictLimiter as unknown as RequestHandler, roomRoutes);
-app.use('/api/scenarios', strictLimiter as unknown as RequestHandler, scenarioRoutes);
+app.use('/api/rooms', strictLimiter);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/scenarios', strictLimiter);
+app.use('/api/scenarios', scenarioRoutes);
+
 
 // [ROUTAGE] Endpoints pour les pages statiques et la documentation de référence
 app.use('/api/reference', referenceRoutes);

@@ -7,9 +7,6 @@ export class PlayerInRoom {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // Relation many-to-one vers Room. On inverse side the Room.players relation
-  // is currently commented out in `Room.ts`, so keep the relation unidirectional
-  // here to avoid TypeScript errors when the inverse property doesn't exist.
   @ManyToOne(() => Room, { onDelete: 'CASCADE' })
   room!: Room;
 
