@@ -16,6 +16,14 @@ import { roomService } from '../services/roomService.js';
 export class RoomController {
   static async createRoom(req: Request, res: Response) {
     const { name, gmId, scenarioId, isPrivate, password } = req.body;
+    // Validation du nom de la salle (univers Rokugan)
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: "Un samouraï ne peut entrer dans une salle sans nom. Veuillez honorer la tradition en nommant votre salle." });
+    }
+    // Vérification du token (authentification)
+    if (!req.headers.authorization) {
+      return res.status(401).json({ error: "Vous n'êtes pas autorisé à pénétrer dans cette salle sans l'autorisation du Champion d'Émeraude." });
+    }
     try {
       const room = await roomService.createRoom({ name, gmId, scenarioId, isPrivate, password });
       res.status(201).json(room);
@@ -33,13 +41,16 @@ export class RoomController {
       const { userId, role } = req.body;
       const { roomId } = req.params;
       if (!userId || !role) {
-        return res.status(400).json({ success: false, message: 'userId et role requis' });
+        return res.status(400).json({ success: false, message: "L'identité et le rôle sont requis pour rejoindre la cour de Rokugan." });
+      }
+      if (!["player", "gm"].includes(role)) {
+        return res.status(400).json({ success: false, message: `Le rôle '${role}' n'est pas reconnu par les traditions de l'Empire d'Émeraude. Seuls les samouraïs (player) ou les maîtres du jeu (gm) peuvent rejoindre la salle.` });
       }
       // Appel du service métier (adapter selon la signature réelle)
       const player = await roomService.addPlayerToRoom(roomId, userId, undefined, role);
       return res.status(201).json({ success: true, player });
     } catch (err) {
-      return res.status(500).json({ success: false, message: (err as Error).message });
+      return res.status(500).json({ success: false, message: `Une ombre plane sur la salle : ${(err as Error).message}` });
     }
   }
 

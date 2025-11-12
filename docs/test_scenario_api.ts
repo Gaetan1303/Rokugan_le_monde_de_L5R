@@ -1,3 +1,12 @@
+type Step = {
+  action: string;
+  start: number;
+  end?: number;
+  duration?: number;
+  success?: boolean;
+  comment?: string;
+  error?: string;
+};
 const BASE_URL = 'https://gm-l5r.onrender.com';
 
 async function registerUser(email: string, password: string, name: string) {
@@ -89,75 +98,193 @@ async function main() {
     { email: `j2${unique}@test.com`, password: 'test123', name: 'Joueur2' },
     { email: `j3${unique}@test.com`, password: 'test123', name: 'Joueur3' },
   ];
+  const report: { steps: Step[]; start: number; end: number | null; duration: number | null } = {
+    steps: [],
+    start: Date.now(),
+    end: null,
+    duration: null
+  };
   // 1. Création des utilisateurs
   const registered = [];
+  let t0 = Date.now();
   for (const u of users) {
+    const step: Step = { action: `register+login ${u.email}`, start: Date.now() };
     try {
       const result = await registerUser(u.email, u.password, u.name);
-      console.log('DEBUG registerUser response:', result);
-      // Après inscription, on fait un login pour récupérer l'id
       const loginRes = await loginUser(u.email, u.password);
-      console.log('DEBUG loginUser response (post-register):', loginRes);
       const user = loginRes.user || loginRes;
       if (!user.id && !user._id && !user.uuid) {
         throw new Error('Impossible de récupérer l\'id utilisateur pour ' + u.email + ': ' + JSON.stringify(user));
       }
-      registered.push({
-        ...user,
-        id: user.id || user._id || user.uuid
-      });
+      registered.push({ ...user, id: user.id || user._id || user.uuid });
+      step.success = true;
+      step.comment = 'Utilisateur créé et connecté';
     } catch (e) {
-      // Affiche la réponse brute de l'inscription même en cas d'erreur
-      if (e && typeof e === 'object' && 'message' in e) {
-        console.error('DEBUG registerUser error:', (e as { message: string }).message);
-      } else {
-        console.error('DEBUG registerUser error (raw):', e);
-      }
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
       // Si déjà existant, on tente de récupérer l'utilisateur via login
-      const loginRes = await loginUser(u.email, u.password);
-      console.log('DEBUG loginUser response:', loginRes);
-      const user = loginRes.user || loginRes;
-      if (!user.id && !user._id && !user.uuid) {
-        throw new Error('Impossible de récupérer l\'id utilisateur pour ' + u.email + ': ' + JSON.stringify(user));
+      try {
+        const loginRes = await loginUser(u.email, u.password);
+        const user = loginRes.user || loginRes;
+        if (!user.id && !user._id && !user.uuid) {
+          throw new Error('Impossible de récupérer l\'id utilisateur pour ' + u.email + ': ' + JSON.stringify(user));
+        }
+        registered.push({ ...user, id: user.id || user._id || user.uuid });
+        step.success = true;
+        step.comment = 'Utilisateur déjà existant, connexion OK';
+      } catch (e2) {
+        step.success = false;
+        step.error = (e2 && typeof e2 === 'object' && 'message' in e2) ? (e2 as { message: string }).message : String(e2);
       }
-      registered.push({
-        ...user,
-        id: user.id || user._id || user.uuid
-      });
     }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
   }
   // 2. Connexion
   const tokens = [];
   for (const u of users) {
-    const { token } = await loginUser(u.email, u.password);
-    tokens.push(token);
+    const step: Step = { action: `login ${u.email}`, start: Date.now() };
+    try {
+      const { token } = await loginUser(u.email, u.password);
+      tokens.push(token);
+      step.success = true;
+      step.comment = 'Connexion réussie';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
   }
   // 3. Création de la room (par le MJ)
-  const room = await createRoom(tokens[0], 'Salle de test');
+  let room;
+  {
+    const step: Step = { action: 'createRoom', start: Date.now() };
+    try {
+      room = await createRoom(tokens[0], 'Salle de test');
+      step.success = true;
+      step.comment = 'Room créée';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
   // 3b. Ajout des joueurs et du MJ dans la room
-  await addPlayerToRoom(tokens[0], room.id, registered[0].id, 'gm');
+  {
+    const step: Step = { action: 'addPlayerToRoom (GM)', start: Date.now() };
+    try {
+      await addPlayerToRoom(tokens[0], room.id, registered[0].id, 'gm');
+      step.success = true;
+      step.comment = 'MJ ajouté à la room';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
   for (let i = 1; i < registered.length; i++) {
-    await addPlayerToRoom(tokens[i], room.id, registered[i].id, 'player');
+    const step: Step = { action: `addPlayerToRoom (player ${i})`, start: Date.now() };
+    try {
+      await addPlayerToRoom(tokens[i], room.id, registered[i].id, 'player');
+      step.success = true;
+      step.comment = `Joueur ${i} ajouté à la room`;
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
   }
   // 4. Création du scénario (par le MJ)
-  const scenario = await createScenario(tokens[0], {
-    name: 'Scénario Test',
-    title: 'Scénario Test',
-    synopsis: 'Test de persistance avec 3 joueurs et 1 MJ',
-    roomId: room.id,
-    playerIds: registered.slice(1).map((u: any) => u.id),
-    gmId: registered[0].id
-  });
-  console.log('Réponse création scénario:', scenario);
-  // 5. Vérification
-  const scenarioId = scenario.id || scenario._id || scenario.uuid;
-  if (!scenarioId) throw new Error('Impossible de trouver l\'id du scénario dans la réponse: ' + JSON.stringify(scenario));
-  const scenarioFetched = await getScenario(tokens[0], scenarioId);
-  console.log('Scénario persistant:', scenarioFetched);
+  let scenarioRes;
+  {
+    const step: Step = { action: 'createScenario', start: Date.now() };
+    try {
+      scenarioRes = await createScenario(tokens[0], {
+        name: 'Scénario Test',
+        title: 'Scénario Test',
+        synopsis: 'Test de persistance avec 3 joueurs et 1 MJ',
+        roomId: room.id,
+        playerIds: registered.slice(1).map((u: any) => u.id),
+        gmId: registered[0].id
+      });
+      step.success = true;
+      step.comment = 'Scénario créé';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
+  // 5. Vérification persistance
+  let scenarioFetched;
+  {
+    const step: Step = { action: 'getScenario', start: Date.now() };
+    try {
+      const scenario = scenarioRes.scenario || scenarioRes;
+      const scenarioId = scenario.id || scenario._id || scenario.uuid;
+      if (!scenarioId) throw new Error('Impossible de trouver l\'id du scénario dans la réponse: ' + JSON.stringify(scenarioRes));
+      scenarioFetched = await getScenario(tokens[0], scenarioId);
+      step.success = true;
+      step.comment = 'Scénario récupéré et persistant';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
   // 6. Nettoyage
-  await deleteScenario(tokens[0], scenario.id);
-  await deleteRoom(tokens[0], room.id);
-  console.log('Nettoyage terminé.');
+  {
+    const step: Step = { action: 'deleteScenario', start: Date.now() };
+    try {
+      const scenario = scenarioRes.scenario || scenarioRes;
+      const scenarioId = scenario.id || scenario._id || scenario.uuid;
+      await deleteScenario(tokens[0], scenarioId);
+      step.success = true;
+      step.comment = 'Scénario supprimé';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
+  {
+    const step: Step = { action: 'deleteRoom', start: Date.now() };
+    try {
+      await deleteRoom(tokens[0], room.id);
+      step.success = true;
+      step.comment = 'Room supprimée';
+    } catch (e) {
+      step.success = false;
+      step.error = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : String(e);
+    }
+    step.end = Date.now();
+    step.duration = step.end - step.start;
+    report.steps.push(step);
+  }
+  report.end = Date.now();
+  report.duration = report.end - report.start;
+  // Affichage du rapport détaillé
+  console.log('\n===== RAPPORT DÉTAILLÉ DU TEST =====');
+  for (const s of report.steps) {
+    console.log(`- [${s.success ? 'OK' : 'FAIL'}] ${s.action} (${s.duration} ms)${s.comment ? ' : ' + s.comment : ''}${s.error ? ' | Erreur: ' + s.error : ''}`);
+  }
+  console.log(`Durée totale: ${report.duration} ms`);
+  console.log('====================================\n');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
