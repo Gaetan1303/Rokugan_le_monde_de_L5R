@@ -1,10 +1,10 @@
 const BASE_URL = 'https://gm-l5r.onrender.com';
 
-async function registerUser(email: string, password: string, username: string) {
+async function registerUser(email: string, password: string, name: string) {
   const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, username })
+    body: JSON.stringify({ email, password, name })
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`Register failed: ${email} | ${text}`);
@@ -68,10 +68,12 @@ async function deleteRoom(token: string, id: number) {
 }
 
 async function addPlayerToRoom(token: string, roomId: string, userId: string, role: 'player' | 'gm') {
+  const body = { userId, role };
+  console.log('DEBUG addPlayerToRoom body:', body);
   const res = await fetch(`${BASE_URL}/api/rooms/${roomId}/players`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ userId, role })
+    body: JSON.stringify(body)
   });
   const text = await res.text();
   if (!res.ok) throw new Error('Add player failed: ' + text);
@@ -82,21 +84,46 @@ async function main() {
   // Générer des emails uniques pour chaque run
   const unique = Date.now();
   const users = [
-    { email: `mj${unique}@test.com`, password: 'test123', username: 'MJ' },
-    { email: `j1${unique}@test.com`, password: 'test123', username: 'Joueur1' },
-    { email: `j2${unique}@test.com`, password: 'test123', username: 'Joueur2' },
-    { email: `j3${unique}@test.com`, password: 'test123', username: 'Joueur3' },
+    { email: `mj${unique}@test.com`, password: 'test123', name: 'MJ' },
+    { email: `j1${unique}@test.com`, password: 'test123', name: 'Joueur1' },
+    { email: `j2${unique}@test.com`, password: 'test123', name: 'Joueur2' },
+    { email: `j3${unique}@test.com`, password: 'test123', name: 'Joueur3' },
   ];
   // 1. Création des utilisateurs
   const registered = [];
   for (const u of users) {
     try {
-      const result = await registerUser(u.email, u.password, u.username);
-      registered.push(result);
+      const result = await registerUser(u.email, u.password, u.name);
+      console.log('DEBUG registerUser response:', result);
+      // Après inscription, on fait un login pour récupérer l'id
+      const loginRes = await loginUser(u.email, u.password);
+      console.log('DEBUG loginUser response (post-register):', loginRes);
+      const user = loginRes.user || loginRes;
+      if (!user.id && !user._id && !user.uuid) {
+        throw new Error('Impossible de récupérer l\'id utilisateur pour ' + u.email + ': ' + JSON.stringify(user));
+      }
+      registered.push({
+        ...user,
+        id: user.id || user._id || user.uuid
+      });
     } catch (e) {
+      // Affiche la réponse brute de l'inscription même en cas d'erreur
+      if (e && e.message) {
+        console.error('DEBUG registerUser error:', e.message);
+      } else {
+        console.error('DEBUG registerUser error (raw):', e);
+      }
       // Si déjà existant, on tente de récupérer l'utilisateur via login
-      const { token, user } = await loginUser(u.email, u.password);
-      registered.push(user ? user : { email: u.email });
+      const loginRes = await loginUser(u.email, u.password);
+      console.log('DEBUG loginUser response:', loginRes);
+      const user = loginRes.user || loginRes;
+      if (!user.id && !user._id && !user.uuid) {
+        throw new Error('Impossible de récupérer l\'id utilisateur pour ' + u.email + ': ' + JSON.stringify(user));
+      }
+      registered.push({
+        ...user,
+        id: user.id || user._id || user.uuid
+      });
     }
   }
   // 2. Connexion

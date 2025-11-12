@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Scenario } from './Scenario.js';
 import { User } from './User.js';
+import { PlayerInRoom } from './PlayerInRoom.js';
 
 @Entity()
 export class Room {
@@ -14,8 +15,8 @@ export class Room {
   gm!: User;
 
   // Relation avec PlayerInRoom (plus flexible que User[])
-  // @OneToMany(() => PlayerInRoom, pir => pir.room)
-  // players!: PlayerInRoom[];
+  @OneToMany(() => PlayerInRoom, pir => pir.room)
+  players!: PlayerInRoom[];
 
   @ManyToOne(() => Scenario, { eager: true, nullable: true })
   scenario!: Scenario;
