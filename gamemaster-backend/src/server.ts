@@ -34,8 +34,6 @@ import pnjRoutes from './routes/pnjRoutes.js';
 import socketHandler from './services/socketHandler.js';
 import { home } from './controllers/HomeController.js';
 import { AuthService } from './services/authService.js';
-// [API PNJ] Expose l'API BigData pour les PNJ (lore)
-app.use('/api/pnj', pnjRoutes);
 
 
 // [SECURITE] Import des middlewares de sécurité et d'authentification WebSocket
@@ -45,6 +43,9 @@ import wsAuth from './middleware/wsAuth.js';
 // [INITIALISATION] Création de l'application Express et du serveur HTTP
 const app = express();
 const server = http.createServer(app);
+
+// [API PNJ] Expose l'API BigData pour les PNJ (lore)
+app.use('/api/pnj', pnjRoutes);
 
 // [EXPORT] Export de l'instance Express pour les tests ou l'intégration
 export default app;
