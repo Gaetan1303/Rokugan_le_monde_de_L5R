@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PNJService } from '../services/PNJService';
+import { PNJService } from '../services/PNJService.js';
 
 // Interface pour l’injection de dépendance (DIP)
 export interface IPNJService {
