@@ -30,9 +30,12 @@ import referenceRoutes from './routes/referenceRoutes.js';
 import scenarioRoutes from './routes/scenarioRoutes.js';
 import frontendRoutes from './routes/frontendRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import pnjRoutes from './routes/pnjRoutes.js';
 import socketHandler from './services/socketHandler.js';
 import { home } from './controllers/HomeController.js';
 import { AuthService } from './services/authService.js';
+// [API PNJ] Expose l'API BigData pour les PNJ (lore)
+app.use('/api/pnj', pnjRoutes);
 
 
 // [SECURITE] Import des middlewares de sécurité et d'authentification WebSocket
@@ -162,6 +165,11 @@ app.get('/api/health', (req: Request, res: Response) => {
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// [PING] Endpoint pour garder l'API réveillée (utilisé par des services de ping ou uptime)
+app.get('/api/ping', (req: Request, res: Response) => {
+  res.status(200).json({ pong: true, timestamp: new Date().toISOString() });
 });
 
 // [MONITORING] Endpoint pour récupérer les statistiques serveur (à sécuriser en production)
