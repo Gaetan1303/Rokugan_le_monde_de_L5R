@@ -17,6 +17,9 @@ if (!databaseUrl) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const useSSL =
+  process.env.DB_SSL === 'true';
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
 
@@ -37,4 +40,10 @@ export const AppDataSource = new DataSource({
   logging: false,
 
   connectTimeoutMS: 15000,
+
+  ssl: useSSL
+    ? {
+        rejectUnauthorized: false,
+      }
+    : false,
 });
