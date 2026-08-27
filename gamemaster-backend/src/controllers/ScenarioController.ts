@@ -7,6 +7,7 @@ import type { Request, Response } from 'express';
 
 // [IMPORTS] Import des modèles et services nécessaires
 import { scenarioService } from '../services/scenarioService.js';
+import { routeParam } from '../utils/httpParams.js';
 
 class ScenarioController {
   static async list(_req: Request, res: Response) {
@@ -15,7 +16,7 @@ class ScenarioController {
   }
 
   static async get(req: Request, res: Response) {
-    const s = await scenarioService.get(req.params.id ?? '');
+    const s = await scenarioService.get(routeParam(req.params.id));
     if (!s) return res.status(404).json({ success: false, message: 'Scénario introuvable' });
     res.json({ success: true, scenario: s });
   }
@@ -36,7 +37,7 @@ class ScenarioController {
   }
 
   static async remove(req: Request, res: Response) {
-    const ok = await scenarioService.remove(req.params.id ?? '');
+    const ok = await scenarioService.remove(routeParam(req.params.id));
     if (!ok) return res.status(404).json({ success: false, message: 'Scénario introuvable' });
     res.json({ success: true });
   }

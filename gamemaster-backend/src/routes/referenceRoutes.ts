@@ -8,6 +8,7 @@
 // [IMPORTS] Import des modules Express et du contrôleur de référence
 import { Router } from 'express';
 import ReferenceController from '../controllers/ReferenceController.js';
+import { routeParam } from '../utils/httpParams.js';
 
 // [ROUTER] Instanciation du routeur Express pour centraliser les endpoints
 const router = Router();
@@ -104,7 +105,7 @@ router.get('/spells', async (req: Request, res: Response) => {
 router.get('/spells/element/:element', async (req: Request, res: Response) => {
     try {
         const data = await loadJsonFile<any>('sorts.json');
-        const element = (req.params.element || '').toLowerCase();
+        const element = (routeParam(req.params.element) || '').toLowerCase();
         const spells = (data.spells || []).filter((s: any) => (s.element || '').toLowerCase() === element);
         res.json({ spells });
     } catch (error) {
@@ -115,7 +116,7 @@ router.get('/spells/element/:element', async (req: Request, res: Response) => {
 router.get('/spells/mastery/:rank', async (req: Request, res: Response) => {
     try {
         const data = await loadJsonFile<any>('sorts.json');
-    const rank = req.params.rank ? parseInt(req.params.rank, 10) : 0;
+    const rank = routeParam(req.params.rank) ? parseInt(routeParam(req.params.rank), 10) : 0;
         const spells = (data.spells || []).filter((s: any) => Number(s.mastery) === rank);
         res.json({ spells });
     } catch (error) {
@@ -136,7 +137,7 @@ router.get('/sorts', async (req, res) => {
 router.get('/sorts/element/:element', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('sorts.json');
-        const element = (req.params.element || '').toLowerCase();
+        const element = (routeParam(req.params.element) || '').toLowerCase();
         const spells = (data.spells || []).filter((s: any) => (s.element || '').toLowerCase() === element);
         res.json({ sorts: spells });
     } catch (error) {
@@ -147,7 +148,7 @@ router.get('/sorts/element/:element', async (req, res) => {
 router.get('/sorts/rang/:rank', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('sorts.json');
-        const rank = parseInt(req.params.rank, 10);
+        const rank = parseInt(routeParam(req.params.rank), 10);
         const spells = (data.spells || []).filter((s: any) => Number(s.mastery) === rank);
         res.json({ sorts: spells });
     } catch (error) {
@@ -181,7 +182,7 @@ router.get('/kiho', async (req, res) => {
 router.get('/kiho/element/:element', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('kiho.json');
-        const element = (req.params.element || '').toLowerCase();
+        const element = (routeParam(req.params.element) || '').toLowerCase();
         const kiho = (data.kiho || []).filter((k: any) => (k.element || '').toLowerCase() === element);
         res.json({ kiho });
     } catch (error) {
@@ -235,7 +236,7 @@ router.get('/techniques', async (req, res) => {
 router.get('/techniques/clan/:clan', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('techniques.json');
-        const clan = (req.params.clan || '').toLowerCase();
+        const clan = (routeParam(req.params.clan) || '').toLowerCase();
         const list = (data.clan_techniques || []).filter((t: any) => (t.clan || '').toLowerCase() === clan);
         res.json({ techniques: list });
     } catch (error) {
@@ -277,7 +278,7 @@ router.get('/families', async (req, res) => {
 router.get('/families/clan/:clan', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('clans.json');
-        const clanName = (req.params.clan || '').toLowerCase();
+        const clanName = (routeParam(req.params.clan) || '').toLowerCase();
         const clan = data.clans.find((c: any) => (c.id || '').toLowerCase() === clanName);
         if (!clan) {
             return res.status(500).json({ error: 'Clan not found' });
@@ -361,7 +362,7 @@ router.get('/paths', async (req, res) => {
 router.get('/paths/clan/:clan', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('voies.json');
-        const clan = (req.params.clan || '').toLowerCase();
+        const clan = (routeParam(req.params.clan) || '').toLowerCase();
         const paths = (data.paths || []).filter((p: any) => (p.clan || '').toLowerCase() === clan || (p.clan || '').toLowerCase() === 'universel');
         res.json({ paths });
     } catch (error) {
@@ -382,7 +383,7 @@ router.get('/voies', async (req, res) => {
 router.get('/voies/clan/:clan', async (req, res) => {
     try {
         const data = await loadJsonFile<any>('voies.json');
-        const clan = (req.params.clan || '').toLowerCase();
+        const clan = (routeParam(req.params.clan) || '').toLowerCase();
         const paths = (data.paths || []).filter((p: any) => (p.clan || '').toLowerCase() === clan || (p.clan || '').toLowerCase() === 'universel');
         res.json({ voies: paths });
     } catch (error) {

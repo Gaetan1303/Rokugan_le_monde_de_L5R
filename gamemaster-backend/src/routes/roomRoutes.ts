@@ -6,6 +6,7 @@ const { v: uuidv } = require('uuid');
 
 // GET /api/rooms - Obtenir toutes les rooms publiques
 import type { Request, Response } from 'express';
+import { routeParam } from '../utils/httpParams.js';
 
 router.get('/', (req: Request, res: Response) => {
   try {
@@ -47,7 +48,7 @@ router.get('/stats', (req: Request, res: Response) => {
 // GET /api/rooms/gm/:gmId - Obtenir les rooms d'un GM
 router.get('/gm/:gmId', (req: Request, res: Response) => {
   try {
-    const rooms = roomService.getRoomsByGM(req.params.gmId);
+    const rooms = roomService.getRoomsByGM(routeParam(req.params.gmId));
     res.json({
       success: true,
       count: rooms.length,
@@ -66,7 +67,7 @@ router.get('/gm/:gmId', (req: Request, res: Response) => {
 // GET /api/rooms/player/:playerId - Obtenir les rooms d'un joueur
 router.get('/player/:playerId', (req: Request, res: Response) => {
   try {
-    const rooms = roomService.getRoomsByPlayer(req.params.playerId);
+    const rooms = roomService.getRoomsByPlayer(routeParam(req.params.playerId));
     res.json({
       success: true,
       count: rooms.length,
@@ -85,7 +86,7 @@ router.get('/player/:playerId', (req: Request, res: Response) => {
 // GET /api/rooms/:roomId - Obtenir une room spécifique
 router.get('/:roomId', (req: Request, res: Response) => {
   try {
-    const room = roomService.getRoomById(req.params.roomId);
+    const room = roomService.getRoomById(routeParam(req.params.roomId));
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -149,7 +150,7 @@ router.post('/', (req: Request, res: Response) => {
 router.post('/:roomId/join', (req: Request, res: Response) => {
   try {
     const { playerName, character, password } = req.body;
-    const roomId = req.params.roomId;
+    const roomId = routeParam(req.params.roomId);
     
     // Validation des données
     if (!playerName || playerName.trim().length === 0) {
@@ -204,7 +205,7 @@ router.post('/:roomId/join', (req: Request, res: Response) => {
 router.post('/:roomId/leave', (req: Request, res: Response) => {
   try {
     const { playerId } = req.body;
-    const roomId = req.params.roomId;
+    const roomId = routeParam(req.params.roomId);
     
     if (!playerId) {
       return res.status(400).json({
@@ -245,7 +246,7 @@ router.post('/:roomId/leave', (req: Request, res: Response) => {
 router.put('/:roomId/status', (req: Request, res: Response) => {
   try {
     const { status, gmId } = req.body;
-    const roomId = req.params.roomId;
+    const roomId = routeParam(req.params.roomId);
     
     const room = roomService.getRoomById(roomId);
     if (!room) {
@@ -294,7 +295,7 @@ router.put('/:roomId/status', (req: Request, res: Response) => {
 router.delete('/:roomId', (req: Request, res: Response) => {
   try {
     const { gmId } = req.body;
-    const roomId = req.params.roomId;
+    const roomId = routeParam(req.params.roomId);
     
     const room = roomService.getRoomById(roomId);
     if (!room) {
@@ -393,7 +394,7 @@ router.post('/with-scenario', (req: Request, res: Response) => {
 router.put('/:roomId/scenario/scene', (req: Request, res: Response) => {
   try {
     const { sceneIndex, title } = req.body || {};
-    const room = roomService.getRoomById(req.params.roomId);
+    const room = roomService.getRoomById(routeParam(req.params.roomId));
     if (!room) return res.status(404).json({ success: false, message: 'Room non trouvée' });
 
     // Accepte soit un index de scène, soit un titre

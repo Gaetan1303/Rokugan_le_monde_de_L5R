@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PNJService } from '../services/PNJService.js';
+import { routeParam } from '../utils/httpParams.js';
 
 // Interface pour l’injection de dépendance (DIP)
 export interface IPNJService {
@@ -21,7 +22,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
 // GET /api/pnj/:id — Détail d’un PNJ
 router.get('/:id', async (req: Request, res: Response) => {
-  const pnj = await pnjService.getPNJById(req.params.id);
+  const pnj = await pnjService.getPNJById(routeParam(req.params.id));
   if (!pnj) return res.status(404).json({ error: 'PNJ non trouvé' });
   res.json(pnj);
 });

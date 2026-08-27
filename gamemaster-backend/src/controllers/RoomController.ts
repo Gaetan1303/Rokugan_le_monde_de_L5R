@@ -11,6 +11,7 @@ import { RoomService } from '../services/roomService.js';
 
 // [SERVICE] Instanciation du service Room pour centraliser la logique métier
 import { roomService } from '../services/roomService.js';
+import { routeParam } from '../utils/httpParams.js';
 
 // [CONTROLLER] Classe RoomController - expose les méthodes REST pour la gestion des rooms
 export class RoomController {
@@ -39,7 +40,7 @@ export class RoomController {
   static async addPlayerToRoom(req: Request, res: Response) {
     try {
       const { userId, role } = req.body;
-      const { roomId } = req.params;
+      const roomId = routeParam(req.params.roomId);
       // Vérification du token (authentification)
       if (!req.headers.authorization) {
         return res.status(401).json({ success: false, message: "Vous n'êtes pas autorisé à rejoindre la salle sans l'autorisation du Champion d'Émeraude." });
@@ -59,7 +60,7 @@ export class RoomController {
   }
 
   static async getRoomById(req: Request, res: Response) {
-    const roomId = req.params.id ?? '';
+    const roomId = routeParam(req.params.id);
     const room = await roomService.getRoomById(roomId);
     if (room) {
       res.json(room);
@@ -79,13 +80,13 @@ export class RoomController {
   }
 
   static async getRoomsByGM(req: Request, res: Response) {
-    const gmId = req.params.gmId ?? '';
+    const gmId = routeParam(req.params.gmId);
     const rooms = await roomService.getRoomsByGM(gmId);
     res.json(rooms);
   }
 
   static async getRoomsByPlayer(req: Request, res: Response) {
-    const playerId = req.params.playerId ?? '';
+    const playerId = routeParam(req.params.playerId);
     const rooms = await roomService.getRoomsByPlayer(playerId);
     res.json(rooms);
   }
