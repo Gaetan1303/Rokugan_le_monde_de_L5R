@@ -1,0 +1,16 @@
+{
+  "id": "araignée",
+  "nom": "Clan de l’Araignée",
+  "description": "Dernier-né des clans majeurs, l’Araignée est né de l’ambition de Daigotsu et de ses suivants, anciens serviteurs de l’Outremonde. Rejetés par l’Empire, ils cherchent à s’imposer par la force et la ruse, incarnant la tentation de l’ombre.",
+  "histoire": "Fondé par Daigotsu après la Guerre des Destructeurs, le clan de l’Araignée incarne la rédemption impossible et la lutte contre la fatalité. Leur existence même est un défi à l’ordre établi, et leur histoire est marquée par la suspicion et la peur.",
+  "figures_majeures": ["daigotsu", "susumu"],
+  "evenements_marquants": ["guerre_des_destructeurs", "fondation_araignee"],
+  "relations": {
+    "alliés": ["aucun"],
+    "rivaux": ["tous"]
+  },
+  "references": {
+    "personnages": ["daigotsu", "susumu"],
+    "evenements": ["guerre_des_destructeurs", "fondation_araignee"]
+  }
+}

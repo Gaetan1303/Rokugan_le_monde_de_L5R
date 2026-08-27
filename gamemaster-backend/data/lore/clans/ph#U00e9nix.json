@@ -1,0 +1,16 @@
+{
+  "id": "phénix",
+  "nom": "Clan du Phénix",
+  "description": "Gardien des secrets magiques, le Clan du Phénix est le plus spirituel de l’Empire. Ses shugenja sont les plus puissants, et le clan veille à l’équilibre entre les forces mystiques et le monde matériel. Le Phénix privilégie la paix, mais peut déchaîner une puissance dévastatrice si nécessaire.",
+  "histoire": "Fondé par Shiba, le clan a toujours été le médiateur entre les mondes. Sa sagesse et sa prudence sont légendaires, mais le Phénix a aussi connu des tragédies, comme la Guerre des Esprits. Il entretient des liens étroits avec les kamis et les fortunes.",
+  "figures_majeures": ["shiba", "isawa", "asako"],
+  "evenements_marquants": ["guerre_des_esprits", "guerre_des_clans"],
+  "relations": {
+    "alliés": ["grue", "crabe", "licorne"],
+    "rivaux": ["scorpion"]
+  },
+  "references": {
+    "personnages": ["shiba", "isawa", "asako"],
+    "evenements": ["guerre_des_esprits", "guerre_des_clans"]
+  }
+}

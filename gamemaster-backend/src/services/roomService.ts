@@ -25,12 +25,13 @@ export class RoomService {
     this.scenarioRepo = AppDataSource.getRepository(Scenario);
   }
 
-  async createRoom({ name, gmId, scenarioId, isPrivate = false, password = null }: {
+  async createRoom({ name, gmId, scenarioId, isPrivate = false, password = null, maxPlayers = 6 }: {
     name: string;
     gmId: string;
     scenarioId?: string;
     isPrivate?: boolean;
     password?: string | null;
+    maxPlayers?: number;
   }): Promise<Room> {
     const gm = await this.userRepo.findOneByOrFail({ id: gmId });
     let scenario: Scenario | undefined = undefined;
@@ -48,7 +49,7 @@ export class RoomService {
       status: 'waiting',
       currentScene: 0,
       scenesHistory: [],
-      maxPlayers: 6
+      maxPlayers
     });
     return await this.roomRepo.save(room);
   }

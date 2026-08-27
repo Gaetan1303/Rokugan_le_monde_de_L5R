@@ -9,14 +9,6 @@ import { AppDataSource } from './data-source.js';
  * - Respecter la séparation des responsabilités et documenter toute évolution majeure.
  */
 
-// [SECURITE] Chargement dynamique des variables d'environnement selon le contexte d'exécution.
-import dotenv from 'dotenv';
-dotenv.config({
-  path: process.env.NODE_ENV === 'production'
-    ? '.env.production'
-    : '.env.development'
-});
-
 // [ARCHITECTURE] Import des dépendances principales (Express, HTTP, Socket.io, CORS)
 import express from 'express';
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
@@ -43,9 +35,6 @@ import wsAuth from './middleware/wsAuth.js';
 // [INITIALISATION] Création de l'application Express et du serveur HTTP
 const app = express();
 const server = http.createServer(app);
-
-// [API PNJ] Expose l'API BigData pour les PNJ (lore)
-app.use('/api/pnj', pnjRoutes);
 
 // [EXPORT] Export de l'instance Express pour les tests ou l'intégration
 export default app;
@@ -74,10 +63,8 @@ const io = new SocketIOServer(server, {
   allowEIO3: false // Désactiver les anciennes versions
 });
 
-// [SECURITE] Authentification WebSocket (à activer impérativement en production)
-// if (process.env.NODE_ENV === 'production') {
-//   io.use(wsAuth.middlewareSocketIO());
-// }
+// [SECURITE] Authentification Socket.IO : obligatoire en production, permissive pour les guests en développement.
+io.use(wsAuth.middlewareSocketIO());
 
 // ============================================
 // [SECURITE] Middlewares HTTP : headers, CORS, rate limiting, sanitization
@@ -125,6 +112,9 @@ app.use(express.static('public'));
 
 // [ROUTAGE] Endpoint d'authentification (rate limit allégé)
 app.use('/api/auth', authRoutes);
+
+// [ROUTAGE] API PNJ/lore, après la chaîne de sécurité HTTP.
+app.use('/api/pnj', pnjRoutes);
 
 // [ROUTAGE] Endpoints rooms et scenarios avec rate limiting strict pour éviter le spam
 app.use('/api/rooms', strictLimiter);
@@ -242,7 +232,7 @@ AppDataSource.initialize()
       console.log(`CORS: ${allowedOrigins.length} origine(s) autorisée(s)`);
       console.log(`Helmet: ${process.env.HELMET_ENABLED !== 'false' ? 'Activé' : 'Désactivé'}`);
       console.log(`Rate Limit: ${process.env.RATE_LIMIT_MAX_REQUESTS || 100} req/${process.env.RATE_LIMIT_WINDOW_MS || 900000}ms`);
-      console.log(`WebSocket Auth: ${process.env.NODE_ENV === 'production' ? 'Activé' : 'Désactivé (dev)'}`);
+      console.log(`WebSocket Auth: ${process.env.NODE_ENV === 'production' ? 'JWT obligatoire' : 'JWT ou guest de développement'}`);
       const apiBaseUrl = process.env.NODE_ENV === 'production'
         ? 'https://gm-l5r.onrender.com'
         : `http://localhost:${PORT}`;
@@ -264,7 +254,7 @@ AppDataSource.initialize()
       'Erreur de connexion à la base de données :',
       String(error),
       'Paramètres utilisés :',
-      `DATABASE_URL: ${process.env.DATABASE_URL}`,
+      `DATABASE_URL: ${process.env.DATABASE_URL ? '[configured]' : '(non défini)'}`,
       `DB_HOST: ${process.env.DB_HOST}`,
       `DB_PORT: ${process.env.DB_PORT}`,
       `DB_USERNAME: ${process.env.DB_USERNAME}`,

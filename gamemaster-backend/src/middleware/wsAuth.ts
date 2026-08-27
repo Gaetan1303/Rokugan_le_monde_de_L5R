@@ -1,166 +1,135 @@
 /**
- * [DEV SENIOR] Middleware d'authentification WebSocket - gestion des tokens et validation des connexions.
- * - Centralise la logique de sécurité pour les échanges temps réel.
- * - Adapter la configuration selon le niveau de sécurité requis en production.
+ * Authentification Socket.IO basée sur le même JWT que l'API REST.
+ * Le client transmet le token via `handshake.auth.token`.
  */
-
-// [IMPORTS] Import des modules nécessaires pour la gestion des tokens JWT
-import * as jwt from 'jsonwebtoken';
-
-/**
- *  AUTHENTIFICATION WEBSOCKET
- * Sécurise les connexions WebSocket avec JWT
- */
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 class WebSocketAuth {
-  secret: string;
-  tokenExpiration: string | number;
-  connectionsByIP: Map<string, number>;
-  maxConnectionsPerIP: number;
+  private readonly secret: string;
+  private readonly connectionsByIP = new Map<string, number>();
+  private readonly maxConnectionsPerIP: number;
+
   constructor() {
-    this.secret = process.env.WEBSOCKET_SECRET || 'default_secret_CHANGE_ME';
-    this.tokenExpiration = process.env.WS_TOKEN_EXPIRATION || '24h';
-    
-    // Tracking des connexions par IP pour prévenir les abus
-      this.connectionsByIP = new Map<string, number>();
-      this.maxConnectionsPerIP = parseInt(process.env.WS_MAX_CONNECTIONS_PER_IP ?? '10');
-    
-    if (this.secret === 'default_secret_CHANGE_ME' && process.env.NODE_ENV === 'production') {
-      console.error(' ALERTE SÉCURITÉ: WEBSOCKET_SECRET non configuré en production!');
+    const configuredSecret = process.env.JWT_SECRET;
+
+    if (process.env.NODE_ENV === 'production' && !configuredSecret) {
+      throw new Error('JWT_SECRET doit être configuré pour sécuriser Socket.IO en production.');
+    }
+
+    this.secret = configuredSecret || 'development-only-secret-change-me';
+    this.maxConnectionsPerIP = parseInt(process.env.WS_MAX_CONNECTIONS_PER_IP ?? '10', 10);
+  }
+
+  verifyToken(token: string): JwtPayload {
+    try {
+      const decoded = jwt.verify(token, this.secret);
+      if (typeof decoded === 'string') throw new Error('Payload JWT invalide');
+      return decoded;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
+        throw new Error('Token expiré');
+      }
+      throw new Error('Token invalide');
     }
   }
 
-  /**
-   * Génère un token d'authentification WebSocket
-   */
-  // (supprimé, version typée ci-dessous)
-    generateToken(userId: string, userName: string, userType: string = 'player', roomId: string | null = null): string {
-      const payload: Record<string, unknown> = {
-        userId,
-        userName,
-        userType,
-        roomId,
-        iat: Math.floor(Date.now() / 1000)
-      };
-  return jwt.sign(payload, this.secret as string, { expiresIn: this.tokenExpiration } as jwt.SignOptions);
-    }
+  middlewareSocketIO() {
+    return (socket: any, next: (error?: Error) => void) => {
+      const ip = this.getClientIP(socket);
+      const currentConnections = this.connectionsByIP.get(ip) || 0;
 
-  /**
-   * Vérifie et décode un token
-   */
-  // (supprimé, version typée ci-dessous)
-    verifyToken(token: string): jwt.JwtPayload | string {
-      try {
-        return jwt.verify(token, this.secret);
-      } catch (error) {
-        if (error instanceof Error && error.name === 'TokenExpiredError') {
-          throw new Error('Token expiré');
-        } else if (error instanceof Error && error.name === 'JsonWebTokenError') {
-          throw new Error('Token invalide');
-        }
-        throw error;
+      if (currentConnections >= this.maxConnectionsPerIP) {
+        console.warn(`[WS] Limite de connexions atteinte pour ${ip}`);
+        return next(new Error('Trop de connexions depuis cette IP'));
       }
-    }
 
-  /**
-   * Middleware d'authentification pour Socket.IO
-   */
-  // (supprimé, version typée ci-dessous)
-    middlewareSocketIO() {
-      return (socket: any, next: any) => {
-        const ip: string = socket.handshake.address;
-        const currentConnections = this.connectionsByIP.get(ip) || 0;
-        if (currentConnections >= this.maxConnectionsPerIP) {
-          console.warn(` IP ${ip} a atteint la limite de connexions (${this.maxConnectionsPerIP})`);
-          return next(new Error('Trop de connexions depuis cette IP'));
-        }
-        const token: string | undefined = socket.handshake.auth?.token || socket.handshake.query?.token;
-        if (!token && process.env.NODE_ENV === 'development') {
-          console.warn('  Connexion WebSocket sans token (mode développement)');
-          socket.userData = { 
-            userId: socket.id, 
-            userName: 'Guest',
-            userType: 'player',
-            authenticated: false
-          };
-          this.trackConnection(ip, 'connect');
-          return next();
-        }
-        if (!token) {
-          console.error('Tentative de connexion WebSocket sans token');
-          return next(new Error('Authentication required'));
-        }
-        try {
-          const decoded = this.verifyToken(token);
-          let userData: any = { authenticated: true };
-          if (typeof decoded === 'object' && decoded !== null) {
-            userData = { ...decoded, authenticated: true };
-          }
-          socket.userData = userData;
-          this.trackConnection(ip, 'connect');
-          // Affichage des infos utilisateur si elles existent
-          const userName = (typeof decoded === 'object' && decoded !== null && 'userName' in decoded) ? (decoded as any).userName : undefined;
-          const userType = (typeof decoded === 'object' && decoded !== null && 'userType' in decoded) ? (decoded as any).userType : undefined;
-          console.log(` Connexion WebSocket authentifiée: ${userName ?? 'inconnu'} (${userType ?? 'inconnu'})`);
-          next();
-        } catch (error) {
-          let message = 'Erreur inconnue';
-          if (error instanceof Error) message = error.message;
-          console.error(` Échec d'authentification WebSocket: ${message}`);
+      const token: string | undefined = socket.handshake.auth?.token;
+
+      if (!token && process.env.NODE_ENV !== 'production') {
+        const guest = {
+          userId: socket.id,
+          userName: 'Guest',
+          userType: 'player' as const,
+          authenticated: false
+        };
+        socket.data.userData = guest;
+        socket.userData = guest;
+        this.trackConnection(ip, 'connect');
+        return next();
+      }
+
+      if (!token) {
+        return next(new Error('Authentication required'));
+      }
+
+      try {
+        const decoded = this.verifyToken(token);
+        const userId = String(decoded['id'] ?? decoded['userId'] ?? '');
+        const userName = String(decoded['name'] ?? decoded['userName'] ?? decoded['email'] ?? 'Utilisateur');
+        const role = String(decoded['role'] ?? decoded['userType'] ?? 'joueur').toLowerCase();
+
+        if (!userId) {
           return next(new Error('Invalid authentication token'));
         }
-      };
-    }
 
-  /**
-   * Suivi des connexions par IP
-   */
-  trackConnection(ip: string, action: string = 'connect') {
+        const userData = {
+          userId,
+          userName,
+          userType: role === 'gm' ? ('gm' as const) : ('player' as const),
+          authenticated: true
+        };
+
+        socket.data.userData = userData;
+        // Compatibilité temporaire avec d'anciens handlers.
+        socket.userData = userData;
+        this.trackConnection(ip, 'connect');
+        return next();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        console.error(`[WS] Échec authentification: ${message}`);
+        return next(new Error('Invalid authentication token'));
+      }
+    };
+  }
+
+  trackConnection(ip: string, action: 'connect' | 'disconnect' = 'connect'): void {
     if (action === 'connect') {
-      const current = this.connectionsByIP.get(ip) || 0;
-      this.connectionsByIP.set(ip, current + 1);
-    } else if (action === 'disconnect') {
-      const current = this.connectionsByIP.get(ip) || 0;
-      if (current > 1) {
-        this.connectionsByIP.set(ip, current - 1);
-      }
-      // Nettoyer si plus de connexions
-      if (current <= 1) {
-        this.connectionsByIP.delete(ip);
-      }
+      this.connectionsByIP.set(ip, (this.connectionsByIP.get(ip) || 0) + 1);
+      return;
+    }
+
+    const current = this.connectionsByIP.get(ip) || 0;
+    if (current <= 1) {
+      this.connectionsByIP.delete(ip);
+    } else {
+      this.connectionsByIP.set(ip, current - 1);
     }
   }
 
-  /**
-   * Nettoyage lors de la déconnexion
-   */
-  onDisconnect(socket: any) {
-    const ip = socket.handshake.address;
-    this.trackConnection(ip, 'disconnect');
+  onDisconnect(socket: any): void {
+    this.trackConnection(this.getClientIP(socket), 'disconnect');
   }
 
-  /**
-   * Obtenir les statistiques de connexions
-   */
-  getConnectionStats(): { totalIPs: number; connectionsByIP: object; maxConnectionsPerIP: number } {
+  getConnectionStats(): { totalIPs: number; totalConnections: number; maxConnectionsPerIP: number } {
     return {
       totalIPs: this.connectionsByIP.size,
-      connectionsByIP: Object.fromEntries(this.connectionsByIP),
+      totalConnections: Array.from(this.connectionsByIP.values()).reduce((sum, count) => sum + count, 0),
       maxConnectionsPerIP: this.maxConnectionsPerIP
     };
   }
 
-  /**
-   * Réinitialiser les connexions pour une IP (en cas d'abus détecté)
-   */
-  resetIPConnections(ip: string) {
+  resetIPConnections(ip: string): void {
     this.connectionsByIP.delete(ip);
-    console.log(` Connexions réinitialisées pour IP: ${ip}`);
+  }
+
+  private getClientIP(socket: any): string {
+    const forwarded = socket.handshake.headers?.['x-forwarded-for'];
+    if (typeof forwarded === 'string' && forwarded.length > 0) {
+      return forwarded.split(',')[0].trim();
+    }
+    return socket.handshake.address || 'unknown';
   }
 }
 
-// Instance singleton
 const wsAuth = new WebSocketAuth();
-
-// [EXPORT] Export du middleware principal pour intégration dans Socket.io
 export default wsAuth;

@@ -1,0 +1,13 @@
+{
+  "id": "guerre_du_chrysanthème",
+  "titre": "La Guerre du Chrysanthème",
+  "date": "510-512 EC",
+  "ere": "Empire d’Émeraude",
+  "resume": "Conflit de succession sanglant opposant l’Empereur Hantei à un usurpateur, marquant l’un des épisodes les plus violents de l’histoire impériale.",
+  "description": "La Guerre du Chrysanthème éclate lorsque Hantei XVI est contesté par un prétendant soutenu par plusieurs clans. Après des années de guerre civile, l’Empereur triomphe, mais l’Empire en sort affaibli et marqué par la méfiance envers les ambitions des clans.",
+  "protagonistes": ["Empereur Hantei XVI", "Clans majeurs", "Usurpateur"],
+  "lieux": ["Otosan Uchi", "Champs de bataille de Rokugan"],
+  "consequences": ["Renforcement du pouvoir impérial", "Défiance envers les ambitions des clans"],
+  "citations": ["« Le trône ne se gagne pas seulement par le sang, mais par la légitimité. »"],
+  "sources": ["Livre de Base L5R 4e édition", "https://l5r.fandom.com/wiki/Chrysanthemum_War"]
+}

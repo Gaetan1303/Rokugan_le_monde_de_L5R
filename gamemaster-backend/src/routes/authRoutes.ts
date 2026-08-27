@@ -1,10 +1,3 @@
-/**
- * [DEV SENIOR] Routes Auth - expose les endpoints REST pour l'authentification WebSocket.
- * - Génération de tokens JWT, validation des identités, sécurité des connexions temps réel.
- * - Adapter les routes selon l'évolution des besoins métier et la politique de sécurité.
- */
-
-// [IMPORTS] Import des modules Express et du middleware d'authentification WebSocket
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
@@ -13,120 +6,85 @@ const router = Router();
 const auth = new AuthService();
 
 router.post('/register', async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ ok: false, error: 'Champs requis manquants' });
-  const result = await auth.register(name, email, password);
-  res.json(result);
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ ok: false, error: 'Champs requis manquants' });
+    }
+
+    if (String(password).length < 8) {
+      return res.status(400).json({ ok: false, error: 'Le mot de passe doit contenir au moins 8 caractères' });
+    }
+
+    const result = await auth.register(String(name), String(email), String(password));
+    return res.status(result.ok ? 201 : 409).json(result);
+  } catch (error) {
+    console.error('[AUTH] Erreur register:', error);
+    return res.status(500).json({ ok: false, error: 'Erreur serveur' });
+  }
 });
 
 router.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ ok: false, error: 'Champs requis manquants' });
-  const result = await auth.login(email, password);
-  res.json(result);
-});
-
-// [MAPPING] Mapping des endpoints vers la logique d'authentification WebSocket
-/**
- *  Routes d'authentification pour WebSocket
- * Génère des tokens JWT pour les connexions WebSocket sécurisées
- */
-
-/**
- * POST /api/auth/ws-token
- * Génère un token d'authentification WebSocket
- * 
- * Body: {
- *   userId: string (obligatoire)
- *   userName: string (obligatoire)
- *   userType: 'gm' | 'player' (optionnel, défaut: 'player')
- *   roomId: string (optionnel)
- * }
- */
-router.post('/ws-token', (req, res) => {
   try {
-    const { userId, userName, userType = 'player', roomId } = req.body;
-
-    // Validation
-    if (!userId || !userName) {
-      return res.status(400).json({
-        success: false,
-        message: 'userId et userName sont obligatoires'
-      });
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ ok: false, error: 'Champs requis manquants' });
     }
 
-    if (userType && !['gm', 'player'].includes(userType)) {
-      return res.status(400).json({
-        success: false,
-        message: 'userType doit être "gm" ou "player"'
-      });
-    }
-
-    // Validation du nom d'utilisateur (sécurité)
-    if (userName.length < 2 || userName.length > 50) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le nom d\'utilisateur doit contenir entre 2 et 50 caractères'
-      });
-    }
-
-  // Générer le token JWT via AuthService
-  const token = auth.generateToken({ userId, userName, userType, roomId });
-
-    res.json({
-      success: true,
-      token,
-      expiresIn: '24h',
-      user: {
-        userId,
-        userName,
-        userType,
-        roomId
-      }
-    });
-
+    const result = await auth.login(String(email), String(password));
+    return res.status(result.ok ? 200 : 401).json(result);
   } catch (error) {
-    console.error('Erreur génération token WebSocket:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la génération du token'
-    });
+    console.error('[AUTH] Erreur login:', error);
+    return res.status(500).json({ ok: false, error: 'Erreur serveur' });
   }
 });
 
 /**
- * POST /api/auth/verify-token
- * Vérifie la validité d'un token WebSocket
+ * Compatibilité pour les anciens clients qui demandent un token WebSocket séparé.
+ * L'identité est dérivée du JWT REST déjà authentifié afin d'empêcher l'usurpation
+ * d'un userId/userName arbitraire dans le body.
  */
-router.post('/verify-token', (req, res) => {
+router.post('/ws-token', (req: Request, res: Response) => {
+  try {
+    const authorization = req.header('authorization');
+    const accessToken = authorization?.startsWith('Bearer ')
+      ? authorization.slice('Bearer '.length).trim()
+      : null;
+
+    if (!accessToken) {
+      return res.status(401).json({ ok: false, error: 'Bearer token requis' });
+    }
+
+    const decoded = auth.verifyToken(accessToken);
+    const userType = String(decoded.role || 'joueur').toLowerCase() === 'gm' ? 'gm' : 'player';
+    const token = auth.generateToken({
+      userId: decoded.id,
+      userName: decoded.name || decoded.email,
+      userType,
+      roomId: typeof req.body?.roomId === 'string' ? req.body.roomId : undefined
+    });
+
+    return res.json({
+      ok: true,
+      token,
+      expiresIn: '24h'
+    });
+  } catch {
+    return res.status(401).json({ ok: false, error: 'Token invalide ou expiré' });
+  }
+});
+
+router.post('/verify-token', (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-
     if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token manquant'
-      });
+      return res.status(400).json({ ok: false, valid: false, error: 'Token manquant' });
     }
 
-  const decoded = auth.verifyToken(token);
-
-    res.json({
-      success: true,
-      valid: true,
-      user: decoded
-    });
-
-  } catch (error) {
-    let message = 'Erreur inconnue';
-    if (error instanceof Error) {
-      message = error.message;
-    }
-    res.status(401).json({
-      success: false,
-      valid: false,
-      message
-    });
+    const decoded = auth.verifyToken(String(token));
+    return res.json({ ok: true, valid: true, user: decoded });
+  } catch {
+    return res.status(401).json({ ok: false, valid: false, error: 'Token invalide ou expiré' });
   }
 });
 

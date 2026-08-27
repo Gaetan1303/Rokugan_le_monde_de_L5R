@@ -21,6 +21,25 @@ type UserInfo = {
   connectedAt: Date;
 };
 
+function toClientRoom(room: any) {
+  return {
+    id: room.id,
+    name: room.name,
+    gmId: room.gm?.id ?? '',
+    gmName: room.gm?.name ?? '',
+    maxPlayers: room.maxPlayers ?? 6,
+    isPublic: !room.isPrivate,
+    players: Array.isArray(room.players)
+      ? room.players.map((player: any) => ({
+          id: player.user?.id ?? player.id,
+          name: player.user?.name ?? 'Joueur',
+          characterName: player.character?.name ?? player.character?.nom ?? undefined
+        }))
+      : [],
+    createdAt: room.createdAt instanceof Date ? room.createdAt.toISOString() : String(room.createdAt ?? '')
+  };
+}
+
 function socketHandler(io: Server, wsAuth: any) {
   // Map pour associer les socket IDs aux users
   const connectedUsers = new Map<string, UserInfo>();
@@ -32,15 +51,6 @@ function socketHandler(io: Server, wsAuth: any) {
     
     console.log(`Nouvelle connexion WebSocket: ${socket.id} (${userData.userName}) - IP: ${ip}`);
     
-    // Gestion de la déconnexion pour nettoyer le tracking
-    socket.on('disconnect', () => {
-      if (wsAuth) {
-        wsAuth.onDisconnect(socket);
-      }
-      connectedUsers.delete(socket.id);
-      console.log(`Déconnexion: ${socket.id}`);
-    });
-
     // Rejoindre une room
     // =============================
     // Compatibilité JDR-test (front GitHub Pages)
@@ -54,34 +64,33 @@ function socketHandler(io: Server, wsAuth: any) {
     // Ces événements cohabitent avec les événements natifs existants.
     // =============================
 
-    // Créer une room (ack via callback)
+    // Créer une room (ack via callback). L'identité du GM vient du JWT, jamais du payload client.
     socket.on('create-room', async (data, callback) => {
       try {
-        const { name, gmId, maxPlayers = 6, isPublic = true, scenarioId, scenario, generateScenario, generateOptions, password } = data || {};
-        if (!name || !gmId) {
-          return callback && callback({ ok: false, error: 'Paramètres manquants (name, gmId)' });
+        const { name, maxPlayers = 6, isPublic = true, scenarioId, generateScenario, generateOptions, password } = data || {};
+        if (!name || !userData?.authenticated || !userData.userId) {
+          return callback && callback({ ok: false, error: 'Authentification requise' });
         }
 
-        // Préparer le scénario si fourni/demandé
         let scenarioEntityId: string | undefined = undefined;
         if (scenarioId) {
           scenarioEntityId = scenarioId;
         } else if (generateScenario || generateOptions) {
-          // Génère un scénario et le sauvegarde si besoin (ici, on suppose que scenarioService.generate retourne un objet compatible)
-          const created = scenarioService.generate(generateOptions || {});
-          // TODO: sauvegarder le scénario en BDD si besoin et récupérer son id
+          scenarioService.generate(generateOptions || {});
         }
 
         const room = await roomService.createRoom({
-          name,
-          gmId,
+          name: String(name).trim(),
+          gmId: userData.userId,
           scenarioId: scenarioEntityId,
           isPrivate: !isPublic,
-          password: password ?? null
+          password: password ?? null,
+          maxPlayers: Math.max(1, Math.min(12, Number(maxPlayers) || 6))
         });
-        // Notifier tous les clients
-        io.emit('room-created', room);
-        callback && callback({ ok: true, room });
+
+        const clientRoom = toClientRoom(room);
+        io.emit('room-created', clientRoom);
+        callback && callback({ ok: true, room: clientRoom });
       } catch (error) {
         console.error('Erreur create-room:', error);
         callback && callback({ ok: false, error: (error as Error).message });
@@ -92,7 +101,7 @@ function socketHandler(io: Server, wsAuth: any) {
     socket.on('list-rooms', async (callback) => {
       try {
         const rooms = await roomService.getPublicRooms();
-        callback && callback({ ok: true, rooms });
+        callback && callback({ ok: true, rooms: rooms.map(toClientRoom) });
       } catch (error) {
         console.error('Erreur list-rooms:', error);
         callback && callback({ ok: false, error: (error as Error).message });
@@ -104,7 +113,7 @@ function socketHandler(io: Server, wsAuth: any) {
       try {
         const room = await roomService.getRoomById(roomId);
         if (!room) return callback && callback({ ok: false, error: 'Session introuvable' });
-        callback && callback({ ok: true, room });
+        callback && callback({ ok: true, room: toClientRoom(room) });
       } catch (error) {
         console.error('Erreur find-room:', error);
         callback && callback({ ok: false, error: (error as Error).message });
@@ -112,7 +121,13 @@ function socketHandler(io: Server, wsAuth: any) {
     });
     socket.on('join-room', async (data, callback) => {
       try {
-        const { roomId, userId, userType, userName, character } = data;
+        const { roomId, character, characterName } = data || {};
+        if (!userData?.authenticated || !userData.userId) {
+          return callback && callback({ ok: false, error: 'Authentification requise' });
+        }
+
+        const userId = userData.userId as string;
+        const userName = userData.userName as string;
         const room = await roomService.getRoomById(roomId);
         if (!room) {
           const errPayload = { type: 'ROOM_NOT_FOUND', message: 'Room non trouvée' };
@@ -130,9 +145,9 @@ function socketHandler(io: Server, wsAuth: any) {
   isPlayer = !!playerRecord;
 
         // Si le joueur n'existe pas encore et que c'est un player, tenter l'ajout auto
-        if (!isGM && !isPlayer && userType === 'player') {
+        if (!isGM && !isPlayer) {
           try {
-            await roomService.addPlayerToRoom(roomId, userId, character || null);
+            await roomService.addPlayerToRoom(roomId, userId, character || (characterName ? { name: characterName } : null));
             isPlayer = true;
           } catch (e) {
             const errPayload = { type: 'JOIN_ERROR', message: (e as Error).message };
@@ -163,25 +178,27 @@ function socketHandler(io: Server, wsAuth: any) {
 
         console.log(`${userName} (${isGM ? 'GM' : 'Joueur'}) a rejoint la room ${room.name} (${roomId})`);
 
-        // Notifier les autres utilisateurs de la room
+        // Recharger la room pour inclure les relations mises à jour après un éventuel ajout de joueur.
+        const updatedRoom = await roomService.getRoomById(roomId);
+        const clientRoom = toClientRoom(updatedRoom || room);
+
         socket.to(roomId).emit('user-joined', {
           userId,
           userName,
           userType: isGM ? 'gm' : 'player',
-          room,
+          room: clientRoom,
           timestamp: new Date()
         });
 
         const joinPayload = {
           success: true,
-          room,
+          room: clientRoom,
           userType: isGM ? 'gm' : 'player',
-          // chatHistory: à implémenter si tu veux l'historique
           timestamp: new Date()
         };
 
         if (typeof callback === 'function') {
-          callback({ ok: true, room });
+          callback({ ok: true, room: clientRoom });
         } else {
           socket.emit('room-joined', joinPayload);
         }
@@ -312,15 +329,24 @@ function socketHandler(io: Server, wsAuth: any) {
       }
     });
 
-    // Compatibilité: événement 'chat' (JDR-test)
+    // Compatibilité: événement 'chat' (JDR-test), avec identité imposée côté serveur.
     socket.on('chat', (data) => {
       try {
         const { roomId, message } = data || {};
-        if (!message || !message.text) return;
-        // Ajouter au chat interne pour l'historique
-  // (addChatMessage supprimé, persistance non implémentée ici)
-        // Relayer tel quel pour le front existant
-        io.to(roomId).emit('chat', message);
+        const userInfo = connectedUsers.get(socket.id);
+        if (!userInfo || userInfo.roomId !== roomId || !message?.text) return;
+
+        const safeMessage = {
+          ...message,
+          roomId,
+          userId: userInfo.userId,
+          userName: userInfo.userName,
+          text: String(message.text).trim().slice(0, 500),
+          timestamp: new Date().toISOString()
+        };
+
+        if (!safeMessage.text) return;
+        io.to(roomId).emit('chat', safeMessage);
       } catch (error) {
         console.error('Erreur chat (compatibilité):', error);
       }
@@ -577,13 +603,20 @@ function socketHandler(io: Server, wsAuth: any) {
       }
     });
 
-    // Compatibilité: événement 'dice' (JDR-test)
+    // Compatibilité: événement 'dice' (JDR-test), limité à la room réellement rejointe.
     socket.on('dice', (data) => {
       try {
         const { roomId, roll } = data || {};
-        if (!roomId || !roll) return;
-        // Relayer tel quel pour le front existant
-        io.to(roomId).emit('dice', roll);
+        const userInfo = connectedUsers.get(socket.id);
+        if (!userInfo || userInfo.roomId !== roomId || !roll) return;
+
+        io.to(roomId).emit('dice', {
+          ...roll,
+          roomId,
+          userId: userInfo.userId,
+          userName: userInfo.userName,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Erreur dice (compatibilité):', error);
       }
@@ -632,9 +665,12 @@ function socketHandler(io: Server, wsAuth: any) {
       }
     });
 
-    // Déconnexion
+    // Déconnexion : notification métier + nettoyage du compteur de sécurité.
     socket.on('disconnect', (reason) => {
       try {
+        if (wsAuth) {
+          wsAuth.onDisconnect(socket);
+        }
         const userInfo = connectedUsers.get(socket.id);
         
         if (userInfo) {

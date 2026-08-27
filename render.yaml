@@ -4,8 +4,9 @@ services:
     env: node
     region: frankfurt
     plan: free
-    buildCommand: cd gamemaster-backend && yarn install
+    buildCommand: cd gamemaster-backend && yarn install --production=false && yarn build
     startCommand: cd gamemaster-backend && yarn start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
@@ -33,8 +34,6 @@ services:
         value: warn
       - key: HIDE_SENSITIVE_LOGS
         value: true
-      #  AJOUTER VOS CLÉS SECRÈTES DANS LE DASHBOARD RENDER
-      # Ne pas mettre les vraies valeurs ici (fichier public)
-      # JWT_SECRET: générer avec "yarn generate-secrets"
-      # SESSION_SECRET: générer avec "yarn generate-secrets"  
-      # WEBSOCKET_SECRET: générer avec "yarn generate-secrets"
+      # Secrets à configurer dans le dashboard Render, jamais dans Git :
+      # JWT_SECRET=<minimum 32 caractères aléatoires>
+      # DATABASE_URL=<PostgreSQL URL>
