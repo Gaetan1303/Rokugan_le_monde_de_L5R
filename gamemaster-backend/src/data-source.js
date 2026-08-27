@@ -15,32 +15,18 @@ if (!databaseUrl) {
   );
 }
 
-const isProd =
-  process.env.NODE_ENV === 'production' ||
-  process.env.NODE_ENV === 'prod';
-
-const isRenderInternal =
-  databaseUrl.includes('.internal') ||
-  databaseUrl.includes('dpg-');
-
-const entities = isProd
-  ? ['dist/models/**/*.js', 'dist/models/*.js']
-  : [User, Scene, Scenario, Room, PlayerInRoom];
+const isProduction = process.env.NODE_ENV === 'production';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: databaseUrl,
 
-  entities,
+  entities: isProduction
+    ? ['dist/models/**/*.js']
+    : [User, Scene, Scenario, Room, PlayerInRoom],
 
   synchronize: true,
   logging: false,
 
-  ssl: isRenderInternal
-    ? false
-    : {
-        rejectUnauthorized: false
-      },
-
-  connectTimeoutMS: 10000
+  connectTimeoutMS: 10000,
 });
