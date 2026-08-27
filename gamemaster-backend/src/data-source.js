@@ -19,11 +19,19 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
+
+  // Render Internal Database URL en production.
   url: databaseUrl,
 
   entities: isProduction
     ? ['dist/models/**/*.js']
-    : [User, Scene, Scenario, Room, PlayerInRoom],
+    : [
+        User,
+        Scene,
+        Scenario,
+        Room,
+        PlayerInRoom,
+      ],
 
   synchronize: true,
   logging: false,

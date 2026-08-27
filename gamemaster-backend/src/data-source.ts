@@ -1,31 +1,40 @@
-
 import 'dotenv/config';
-import { DataSource } from "typeorm";
+import { DataSource } from 'typeorm';
 
-import { User } from "./models/User.js";
-import { Scene } from "./models/Scene.js";
-import { Scenario } from "./models/Scenario.js";
-
+import { User } from './models/User.js';
+import { Scene } from './models/Scene.js';
+import { Scenario } from './models/Scenario.js';
+import { Room } from './models/Room.js';
+import { PlayerInRoom } from './models/PlayerInRoom.js';
 
 const databaseUrl = process.env.DATABASE_URL;
+
 if (!databaseUrl) {
-  throw new Error('DATABASE_URL n\'est pas défini dans les variables d\'environnement.');
+  throw new Error(
+    "DATABASE_URL n'est pas défini dans les variables d'environnement."
+  );
 }
 
-// Détection du mode (dev/prod) pour charger les entités au bon chemin
-const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod';
-const entities = isProd
-  ? [
-      'dist/models/**/*.js',
-      'dist/models/*.js'
-    ]
-  : [User, Scene, Scenario];
+const isProduction = process.env.NODE_ENV === 'production';
 
 export const AppDataSource = new DataSource({
-  type: "postgres",
+  type: 'postgres',
+
   url: databaseUrl,
+
+  entities: isProduction
+    ? ['dist/models/**/*.js']
+    : [
+        User,
+        Scene,
+        Scenario,
+        Room,
+        PlayerInRoom,
+      ],
+
   synchronize: true,
+
   logging: false,
-  entities,
-  ssl: { rejectUnauthorized: false }
+
+  connectTimeoutMS: 15000,
 });
