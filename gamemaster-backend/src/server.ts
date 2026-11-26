@@ -22,6 +22,8 @@ import referenceRoutes from './routes/referenceRoutes.js';
 import scenarioRoutes from './routes/scenarioRoutes.js';
 import frontendRoutes from './routes/frontendRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import realtimeRoutes from './routes/realtimeRoutes.js';
+import { startRealtime, stopRealtime } from './realtime/index.js';
 import pnjRoutes from './routes/pnjRoutes.js';
 import socketHandler from './services/socketHandler.js';
 import { home } from './controllers/HomeController.js';
@@ -112,6 +114,9 @@ app.use(express.static('public'));
 
 // [ROUTAGE] Endpoint d'authentification (rate limit allégé)
 app.use('/api/auth', authRoutes);
+
+// [ROUTAGE] Temps réel Mercure : jeton d'abonnement (JWT requis, voir realtimeRoutes)
+app.use('/api/realtime', realtimeRoutes);
 
 // [ROUTAGE] API PNJ/lore, après la chaîne de sécurité HTTP.
 app.use('/api/pnj', pnjRoutes);
@@ -222,6 +227,7 @@ const PORT = process.env.PORT || 3000;
 AppDataSource.initialize()
   .then(() => {
     console.log(' Connexion à la base de données PostgreSQL réussie !');
+    startRealtime(AppDataSource);
     server.listen(PORT, () => {
       console.log('');
       console.log('====================================');
@@ -273,6 +279,7 @@ AppDataSource.initialize()
 
 // [INFRA] Gestion propre des signaux d'arrêt (SIGTERM/SIGINT) pour éviter les corruptions de données
 process.on('SIGTERM', () => {
+  stopRealtime();
   console.log('SIGTERM reçu. Arrêt du serveur...');
   server.close(() => {
     console.log('Serveur arrêté proprement');
@@ -281,6 +288,7 @@ process.on('SIGTERM', () => {
 });
 
 process.on('SIGINT', () => {
+  stopRealtime();
   console.log('\nSIGINT reçu. Arrêt du serveur...');
   server.close(() => {
     console.log('Serveur arrêté proprement');

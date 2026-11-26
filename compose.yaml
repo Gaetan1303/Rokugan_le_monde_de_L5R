@@ -1,0 +1,46 @@
+# Environnement de DÉVELOPPEMENT : PostgreSQL + hub Mercure.
+#   docker compose up -d
+# Les clés ci-dessous sont des valeurs de dev : ne JAMAIS les réutiliser en production.
+# ⚠️ Ce fichier n'a pas pu être exécuté dans l'environnement où il a été écrit (pas de Docker) :
+#    les paramètres du hub ont été validés avec le binaire Mercure 1.1.6, pas avec cette image.
+#    Épingle un tag précis de l'image une fois testé (ex. dunglas/mercure:v1.1.6).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gamemaster
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gamemaster"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mercure:
+    image: dunglas/mercure:latest
+    restart: unless-stopped
+    environment:
+      # HTTP simple en local ; en production le hub est derrière HTTPS (voir docs/REALTIME.md).
+      SERVER_NAME: ":80"
+      GLOBAL_OPTIONS: "auto_https off"
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_PUBLISHER_JWT_KEY:-dev-publisher-key-change-me-0123456789abcdef}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_SUBSCRIBER_JWT_KEY:-dev-subscriber-key-change-me-0123456789abcdef}
+      MERCURE_PUBLISHER_JWT_ALG: HS256
+      MERCURE_SUBSCRIBER_JWT_ALG: HS256
+      # Doit être égal à MERCURE_ISSUER côté backend (claim `iss` des jetons).
+      MERCURE_TRUSTED_ISSUERS: ${MERCURE_ISSUER:-https://localhost}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cookie_name mercure_access_token
+        cors_origins http://localhost:4200
+    ports:
+      - "3901:80"
+
+volumes:
+  pgdata:

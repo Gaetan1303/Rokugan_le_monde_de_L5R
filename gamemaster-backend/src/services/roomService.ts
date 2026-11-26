@@ -54,6 +54,12 @@ export class RoomService {
     return await this.roomRepo.save(room);
   }
 
+  /** Identifiant du MJ d'une table (le créateur n'a pas forcément de ligne PlayerInRoom). */
+  async getGmId(roomId: string): Promise<string | null> {
+    const room = await this.roomRepo.findOne({ where: { id: roomId }, relations: ['gm'] });
+    return room?.gm?.id ?? null;
+  }
+
   async getRoomById(roomId: string): Promise<Room | null> {
     return await this.roomRepo.findOne({
       where: { id: roomId },

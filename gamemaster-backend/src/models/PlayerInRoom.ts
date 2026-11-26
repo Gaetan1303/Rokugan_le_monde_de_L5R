@@ -12,7 +12,7 @@ export class PlayerInRoom {
   @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   user!: User;
 
-  @Column({ default: 'player' })
+  @Column({ type: 'varchar', default: 'player' })
   role!: 'player' | 'gm';
 
   @Column('jsonb', { nullable: true })

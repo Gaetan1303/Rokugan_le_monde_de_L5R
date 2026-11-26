@@ -13,3 +13,6 @@ log/
 .DS_Store
 .vscode/
 .idea/
+
+# Compilation des tests d'intégration
+.tmp-integration/

@@ -5,16 +5,16 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   email!: string;
 
-  @Column({ length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   password!: string; // Store hashed password only
 
-  @Column({ length: 50 })
+  @Column({ type: 'varchar', length: 50 })
   name!: string; // Nom de l'utilisateur
 
-  @Column({ default: 'joueur' })
+  @Column({ type: 'varchar', default: 'joueur' })
   role!: string; // "GM" ou "joueur"
 
   @CreateDateColumn()

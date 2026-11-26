@@ -45,10 +45,10 @@ export class Scenario {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   title!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   synopsis?: string;
 
   @Column('simple-array', { nullable: true })
@@ -70,7 +70,7 @@ export class Scenario {
   @Column('jsonb', { nullable: true })
   rewards?: Reward[];
 
-  @Column({ default: 'standard' })
+  @Column({ type: 'varchar', default: 'standard' })
   difficulty!: string;
 
   @Column('simple-array', { nullable: true })

@@ -6,7 +6,7 @@ export class Scene {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   title!: string;
 
   @Column('text')

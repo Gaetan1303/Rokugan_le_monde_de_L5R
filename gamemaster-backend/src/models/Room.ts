@@ -8,7 +8,7 @@ export class Room {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   name!: string;
 
   @ManyToOne(() => User, { nullable: false })
@@ -21,7 +21,7 @@ export class Room {
   @ManyToOne(() => Scenario, { eager: true, nullable: true })
   scenario!: Scenario;
 
-  @Column({ default: 'waiting' })
+  @Column({ type: 'varchar', default: 'waiting' })
   status!: 'waiting' | 'active' | 'paused' | 'completed';
 
   @Column('int', { default: 0 })
@@ -30,13 +30,13 @@ export class Room {
   @Column('simple-array', { default: '' })
   scenesHistory!: number[];
 
-  @Column({ default: 6 })
+  @Column({ type: 'integer', default: 6 })
   maxPlayers!: number;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isPrivate!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   password!: string;
 
   @CreateDateColumn()

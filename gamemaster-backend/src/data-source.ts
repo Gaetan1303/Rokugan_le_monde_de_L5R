@@ -6,6 +6,9 @@ import { Scene } from './models/Scene.js';
 import { Scenario } from './models/Scenario.js';
 import { Room } from './models/Room.js';
 import { PlayerInRoom } from './models/PlayerInRoom.js';
+import { EventLog } from './models/EventLog.js';
+import { EventSequence } from './models/EventSequence.js';
+import { Outbox } from './models/Outbox.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -34,6 +37,9 @@ export const AppDataSource = new DataSource({
         Scenario,
         Room,
         PlayerInRoom,
+        EventLog,
+        EventSequence,
+        Outbox,
       ],
 
   synchronize: true,
