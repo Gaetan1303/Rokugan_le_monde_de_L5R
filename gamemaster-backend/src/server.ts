@@ -24,6 +24,7 @@ import frontendRoutes from './routes/frontendRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import realtimeRoutes from './routes/realtimeRoutes.js';
 import { startRealtime, stopRealtime } from './realtime/index.js';
+import { collectStartupWarnings } from './startupChecks.js';
 import pnjRoutes from './routes/pnjRoutes.js';
 import socketHandler from './services/socketHandler.js';
 import { home } from './controllers/HomeController.js';
@@ -35,6 +36,11 @@ import { helmetConfig, apiLimiter, strictLimiter, sanitizeData, validateOrigin, 
 import wsAuth from './middleware/wsAuth.js';
 
 // [INITIALISATION] Création de l'application Express et du serveur HTTP
+// [DEMARRAGE] Avertissements de configuration dangereuse (ne bloquent jamais le démarrage)
+for (const warning of collectStartupWarnings(process.env)) {
+  console.warn(`[CONFIG] ${warning}`);
+}
+
 const app = express();
 const server = http.createServer(app);
 

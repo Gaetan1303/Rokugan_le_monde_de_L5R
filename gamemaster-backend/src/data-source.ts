@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
+import { decideDbSsl, withoutSslParams } from './dbSsl.js';
 
 import { User } from './models/User.js';
 import { Scene } from './models/Scene.js';
@@ -20,14 +21,17 @@ if (!databaseUrl) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const dbSsl = decideDbSsl(databaseUrl, process.env);
+
 console.log(
-  `PostgreSQL: ${isProduction ? 'production / TLS enabled' : 'development'}`
+  `PostgreSQL: ${isProduction ? 'production' : 'development'} / TLS ${dbSsl.enabled ? `activé (${dbSsl.reason})` : 'désactivé'}`
 );
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
 
-  url: databaseUrl,
+  // Les paramètres TLS de l'URL sont retirés : seule la décision de decideDbSsl s'applique (voir dbSsl.ts).
+  url: withoutSslParams(databaseUrl),
 
   entities: isProduction
     ? ['dist/models/**/*.js']
@@ -48,9 +52,5 @@ export const AppDataSource = new DataSource({
 
   connectTimeoutMS: 15000,
 
-  ssl: isProduction
-    ? {
-        rejectUnauthorized: false,
-      }
-    : false,
+  ssl: dbSsl.enabled ? { rejectUnauthorized: dbSsl.rejectUnauthorized } : false,
 });
