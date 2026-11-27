@@ -25,6 +25,8 @@ import authRoutes from './routes/authRoutes.js';
 import realtimeRoutes from './routes/realtimeRoutes.js';
 import { startRealtime, stopRealtime } from './realtime/index.js';
 import { collectStartupWarnings } from './startupChecks.js';
+import { formatDbError, initializeWithRetry } from './dbDiagnostics.js';
+import { decideDbSsl } from './dbSsl.js';
 import pnjRoutes from './routes/pnjRoutes.js';
 import socketHandler from './services/socketHandler.js';
 import { home } from './controllers/HomeController.js';
@@ -230,7 +232,13 @@ const PORT = process.env.PORT || 3000;
 
 
 // [BDD] Initialisation de la connexion PostgreSQL via TypeORM
-AppDataSource.initialize()
+initializeWithRetry(AppDataSource, {
+  attempts: Number(process.env.DB_CONNECT_RETRIES) || 5,
+  delayMs: Number(process.env.DB_CONNECT_RETRY_DELAY_MS) || 3000,
+  onRetry: (error, attempt, attempts, waitMs) => {
+    console.warn(`[DB] Connexion impossible (tentative ${attempt}/${attempts}) : ${(error as Error)?.message ?? error}. Nouvel essai dans ${Math.round(waitMs / 1000)} s...`);
+  },
+})
   .then(() => {
     console.log(' Connexion à la base de données PostgreSQL réussie !');
     startRealtime(AppDataSource);
@@ -264,14 +272,14 @@ AppDataSource.initialize()
     const errorMsg = [
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       'Erreur de connexion à la base de données :',
-      String(error),
-      'Paramètres utilisés :',
-      `DATABASE_URL: ${process.env.DATABASE_URL ? '[configured]' : '(non défini)'}`,
-      `DB_HOST: ${process.env.DB_HOST}`,
-      `DB_PORT: ${process.env.DB_PORT}`,
-      `DB_USERNAME: ${process.env.DB_USERNAME}`,
-      `DB_PASSWORD: ${process.env.DB_PASSWORD ? '***' : '(non défini)'}`,
-      `DB_DATABASE: ${process.env.DB_DATABASE}`,
+      ...formatDbError(
+        error,
+        process.env.DATABASE_URL,
+        (() => {
+          const d = decideDbSsl(process.env.DATABASE_URL ?? '', process.env);
+          return d.enabled ? `activé (${d.reason})` : 'désactivé';
+        })(),
+      ),
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     ].join('\n');
     fs.appendFileSync(logPath, errorMsg + '\n');
